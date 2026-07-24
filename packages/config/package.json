@@ -1,0 +1,12 @@
+{
+  "name": "@atlas/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tailwind": "./tailwind.ts"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

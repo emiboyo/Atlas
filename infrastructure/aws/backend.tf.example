@@ -1,0 +1,9 @@
+terraform {
+  backend "s3" {
+    bucket         = "atlas-ai-terraform-state"
+    key            = "environments/development/network.tfstate"
+    region         = "eu-west-2"
+    encrypt        = true
+    dynamodb_table = "atlas-ai-terraform-locks"
+  }
+}

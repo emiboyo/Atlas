@@ -1,0 +1,109 @@
+name: Deploy API
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Protected GitHub environment
+        required: true
+        type: choice
+        options: [development, staging, production]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-api-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, migrate, and deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and publish immutable image
+        env:
+          ECR_REPOSITORY_URL: ${{ vars.API_ECR_REPOSITORY_URL }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build --file apps/api/Dockerfile --tag "$ECR_REPOSITORY_URL:$IMAGE_TAG" .
+          docker push "$ECR_REPOSITORY_URL:$IMAGE_TAG"
+
+      - name: Register task definition
+        id: task
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+          ECR_REPOSITORY_URL: ${{ vars.API_ECR_REPOSITORY_URL }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          current_task_definition="$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)"
+          aws ecs describe-task-definition \
+            --task-definition "$current_task_definition" \
+            --query taskDefinition > task-definition.json
+          jq --arg image "$ECR_REPOSITORY_URL:$IMAGE_TAG" \
+            '(.containerDefinitions[] | select(.name == "api") | .image) = $image
+             | del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy)' \
+            task-definition.json > task-definition.next.json
+          next_task_definition="$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition.next.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)"
+          echo "arn=$next_task_definition" >> "$GITHUB_OUTPUT"
+
+      - name: Run database migrations
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+          TASK_DEFINITION: ${{ steps.task.outputs.arn }}
+        run: |
+          network_configuration="$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$SERVICE" \
+            --query 'services[0].networkConfiguration' \
+            --output json)"
+          migration_task="$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASK_DEFINITION" \
+            --launch-type FARGATE \
+            --network-configuration "$network_configuration" \
+            --overrides '{"containerOverrides":[{"name":"api","command":["alembic","-c","packages/database/alembic.ini","upgrade","head"]}]}' \
+            --query 'tasks[0].taskArn' \
+            --output text)"
+          test "$migration_task" != "None"
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$migration_task"
+          exit_code="$(aws ecs describe-tasks \
+            --cluster "$CLUSTER" \
+            --tasks "$migration_task" \
+            --query 'tasks[0].containers[?name==`api`].exitCode | [0]' \
+            --output text)"
+          test "$exit_code" = "0"
+
+      - name: Deploy service
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+          TASK_DEFINITION: ${{ steps.task.outputs.arn }}
+        run: |
+          aws ecs update-service \
+            --cluster "$CLUSTER" \
+            --service "$SERVICE" \
+            --task-definition "$TASK_DEFINITION" \
+            --force-new-deployment > /dev/null
+          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"

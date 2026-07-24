@@ -1,0 +1,32 @@
+{
+  "name": "atlas-ai",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "api:dev": "python -m uvicorn apps.api.src.main:app --reload --host 0.0.0.0 --port 8000",
+    "api:test": "pytest apps/api/tests",
+    "api:lint": "ruff check apps packages/database",
+    "api:format": "ruff format apps packages/database",
+    "api:typecheck": "mypy apps/api/src packages/database/atlas_database",
+    "compose:up": "docker compose up --build",
+    "compose:down": "docker compose down",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "turbo": "^2.5.4"
+  }
+}

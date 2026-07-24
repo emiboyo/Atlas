@@ -1,0 +1,37 @@
+name: Infrastructure
+
+on:
+  pull_request:
+    paths:
+      - "infrastructure/**"
+      - ".github/workflows/infrastructure.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infrastructure/**"
+      - ".github/workflows/infrastructure.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.7"
+      - name: Format
+        run: terraform -chdir=infrastructure/aws fmt -check -recursive
+      - name: Initialize without remote state
+        run: terraform -chdir=infrastructure/aws init -backend=false -input=false
+      - name: Validate
+        run: terraform -chdir=infrastructure/aws validate
+      - name: Scan Terraform configuration
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: config
+          scan-ref: infrastructure/aws
+          severity: HIGH,CRITICAL
+          exit-code: "1"

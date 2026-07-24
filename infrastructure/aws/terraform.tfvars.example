@@ -1,0 +1,23 @@
+project_name = "atlas-ai"
+environment  = "development"
+aws_region   = "eu-west-2"
+dr_region    = "eu-west-1"
+
+vpc_cidr       = "10.20.0.0/16"
+certificate_arn = "arn:aws:acm:eu-west-2:123456789012:certificate/replace-me"
+api_image_tag   = "replace-with-an-immutable-git-sha"
+api_cors_origins = "[\"https://app.example.com\"]"
+
+api_desired_count = 1
+api_min_capacity  = 1
+api_max_capacity  = 10
+
+db_instance_class          = "db.t4g.medium"
+db_allocated_storage_gib   = 100
+db_max_allocated_storage_gib = 1000
+redis_node_type            = "cache.t4g.small"
+
+github_repository        = "your-org/atlas-ai"
+github_oidc_provider_arn = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+
+# Supply TF_VAR_redis_auth_token through a protected CI secret. Never commit it here.

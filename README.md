@@ -1,0 +1,280 @@
+# Atlas AI
+
+> The Intelligent Investment Operating System.
+
+Atlas AI is a production-oriented foundation for a global investment platform. This repository
+contains independently deployable web and API applications, shared packages, local infrastructure,
+cloud foundations, tests, and delivery automation. It intentionally contains no investment
+business logic.
+
+## Architecture
+
+```text
+                         ┌──────────────────────────────┐
+                         │ Next.js / Vercel             │
+                         │ Web, SSR, Clerk, Stripe UI   │
+                         └──────────────┬───────────────┘
+                                        │ HTTPS / JSON
+                         ┌──────────────▼───────────────┐
+                         │ FastAPI / AWS                │
+                         │ /api/v1, DI, errors, logs    │
+                         └──────────┬──────────┬────────┘
+                                    │          │
+                         ┌──────────▼───┐  ┌───▼──────────┐
+                         │ PostgreSQL   │  │ Redis         │
+                         │ SQLAlchemy   │  │ Cache/coord.  │
+                         └──────────────┘  └──────────────┘
+```
+
+The repository begins as a modular monolith with hard package boundaries. This preserves
+transactional consistency and delivery speed without preventing later service extraction.
+The frontend and backend already have separate build and deployment units.
+
+Key platform decisions:
+
+- **Next.js App Router** provides server rendering, modern React, and first-class Vercel delivery.
+- **FastAPI + async SQLAlchemy** provides typed OpenAPI contracts and non-blocking data access.
+- **PostgreSQL** is the durable system of record; **Redis** is ephemeral cache and coordination.
+- **Clerk** and **Stripe** are represented as configuration boundaries only; flows come later.
+- **JSON logs, request IDs, Prometheus metrics, liveness, and readiness** are foundational.
+- **pnpm + Turborepo** provides reproducible workspace installs and dependency-aware task caching.
+- **Docker Compose** is for local integration; managed AWS services are the production target.
+
+More detail: [architecture](docs/architecture.md), [security](docs/security.md), and
+[authentication and authorization](docs/authentication-and-authorization.md).
+
+The persistence contract is documented in the
+[financial domain model](docs/financial-domain-model.md) and
+[data classification](docs/data-classification.md).
+Stripe integration boundaries are described in
+[payments architecture](docs/payments-architecture.md).
+
+## Prerequisites
+
+- Node.js 20+ (22 recommended)
+- pnpm 10.12.1 through Corepack
+- Python 3.12
+- Docker Engine with Compose v2
+- Git
+
+## Install
+
+### Automated
+
+Windows PowerShell:
+
+```powershell
+.\scripts\bootstrap.ps1
+```
+
+macOS or Linux:
+
+```sh
+./scripts/bootstrap.sh
+```
+
+### Manual
+
+```sh
+corepack enable
+corepack prepare pnpm@10.12.1 --activate
+pnpm install
+python -m venv .venv
+python -m pip install -r apps/api/requirements-dev.txt
+```
+
+Copy the templates before running outside Compose:
+
+```sh
+cp .env.example .env
+cp apps/web/.env.example apps/web/.env.local
+cp apps/api/.env.example apps/api/.env
+```
+
+Replace example secrets. Never use the Compose password or test credentials in shared or
+production environments.
+
+## Run
+
+### Entire stack with Docker
+
+```sh
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Web | http://localhost:3000 |
+| API v1 | http://localhost:8000/api/v1/ |
+| Swagger UI | http://localhost:8000/docs |
+| ReDoc | http://localhost:8000/redoc |
+| OpenAPI schema | http://localhost:8000/openapi.json |
+| Liveness | http://localhost:8000/health/live |
+| Readiness | http://localhost:8000/health/ready |
+| Prometheus metrics | http://localhost:8000/metrics |
+
+Stop services with `docker compose down`. Add `--volumes` only when you intentionally want to
+delete local PostgreSQL and Redis data.
+
+### Native development
+
+Start PostgreSQL and Redis through Compose, then run the applications with reload:
+
+```sh
+docker compose up postgres redis
+pnpm dev
+```
+
+The root `dev` task runs the Next.js development server. Start the API in another terminal:
+
+```sh
+pnpm api:dev
+```
+
+When running the API on the host, change database and Redis hosts in `apps/api/.env` from
+`postgres` and `redis` to `localhost`.
+
+## Test and verify
+
+```sh
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+
+ruff format --check apps packages/database
+ruff check apps packages/database
+mypy apps/api/src packages/database/atlas_database
+pytest --cov=apps.api.src --cov=packages.database.atlas_database --cov-report=term-missing
+docker compose config --quiet
+```
+
+The cross-platform `scripts/check.*` scripts run the standard local quality gate. GitHub Actions
+runs independent lint, test, application build, and container build workflows on pull requests
+and pushes to `main`.
+
+## Database migrations
+
+Schema ownership lives in `packages/database`.
+
+```sh
+alembic -c packages/database/alembic.ini revision --autogenerate -m "describe change"
+alembic -c packages/database/alembic.ini upgrade head
+alembic -c packages/database/alembic.ini downgrade -1
+```
+
+Every migration must be reviewed for locks, data loss, backward compatibility, and rollback
+behavior. Deploy expand-and-contract schema changes for zero-downtime releases.
+
+## Deployment
+
+### Web on Vercel
+
+Import the repository, select `apps/web` as the project root, and configure variables from
+`apps/web/.env.example`. Use separate Clerk and Stripe instances per environment. Vercel builds
+the standalone Next.js output using the checked-in configuration.
+
+### API and data on AWS
+
+The validated Terraform stack under `infrastructure/aws` establishes:
+
+- FastAPI container in ECS Fargate behind ALB and AWS WAF
+- Amazon RDS for PostgreSQL with Multi-AZ, encryption, PITR, and connection pooling
+- Amazon ElastiCache for Redis with encryption and automatic failover
+- ECR for immutable container images
+- Secrets Manager and KMS for credentials and encryption keys
+- CloudWatch logs, WAF/ALB access logs, metrics, alarms, and dashboards
+- Encrypted AWS Backup vaults with cross-region recovery copies
+- GitHub OIDC deployment with immutable images and pre-deployment migrations
+
+Cloud resources must be promoted by a protected CI environment using short-lived OIDC
+credentials. Compose is never a production deployment mechanism. See
+[deployment guidance](docs/deployment.md).
+
+## Coding standards
+
+- Keep application layers pointed inward: routes → use cases → domain; adapters implement ports.
+- Use strict types. `any`, broad exception suppression, and unsafe casts require written rationale.
+- Inject databases, caches, clocks, and external providers. Domain behavior remains deterministic.
+- Return stable, machine-readable error codes; never expose stack traces or internal details.
+- Write structured events, not prose logs. Never log credentials, payment data, tokens, or PII.
+- Tests accompany behavior and contract changes; critical financial calculations require property
+  and invariant tests when introduced.
+- UI must meet WCAG 2.2 AA, support keyboard navigation, responsive layouts, and both themes.
+- All database changes require migrations; all configuration requires documented templates.
+
+See [coding standards](docs/coding-standards.md).
+
+## Git workflow
+
+1. Branch from an up-to-date `main` using `feat/`, `fix/`, `chore/`, or `docs/`.
+2. Make small, cohesive commits using Conventional Commits.
+3. Open a pull request with risk, validation, migration, and rollback notes.
+4. Require CODEOWNERS review and all GitHub Actions checks.
+5. Squash merge after approval; never force-push or commit directly to protected `main`.
+6. Release immutable artifacts once, then promote the same artifact through environments.
+
+## Folder structure
+
+```text
+atlas-ai/
+├── .github/
+│   ├── workflows/          # Lint, test, and build pipelines
+│   ├── CODEOWNERS
+│   └── pull_request_template.md
+├── apps/
+│   ├── web/                # Next.js application and homepage
+│   └── api/                # FastAPI application and tests
+├── packages/
+│   ├── ui/                 # Shared Shadcn-style React components
+│   ├── config/             # Shared Tailwind configuration
+│   ├── shared/             # Stable TypeScript contracts and constants
+│   ├── database/           # SQLAlchemy base, sessions, Alembic
+│   ├── eslint-config/      # Shared flat ESLint configurations
+│   └── typescript-config/  # Strict shared TypeScript configurations
+├── infrastructure/
+│   └── aws/                # Terraform AWS network foundation
+├── docker/
+│   ├── postgres/           # Local PostgreSQL initialization
+│   └── redis/              # Local Redis runtime configuration
+├── docs/
+│   ├── adr/                # Architecture decision records
+│   ├── architecture.md
+│   ├── coding-standards.md
+│   ├── deployment.md
+│   └── security.md
+├── scripts/                # Bootstrap and quality-gate scripts
+├── docker-compose.yml
+├── package.json
+├── pnpm-workspace.yaml
+├── pyproject.toml
+├── requirements.txt
+└── turbo.json
+```
+
+## Operational endpoints
+
+- `GET /health/live` proves the API event loop is responsive.
+- `GET /health/ready` checks PostgreSQL and Redis and returns `503` when unavailable.
+- `GET /metrics` exposes Prometheus-format process and request metrics.
+- Every API response carries `X-Request-ID`; inbound IDs are preserved for distributed tracing.
+- Swagger and ReDoc derive from the same OpenAPI contract used by clients.
+
+## License
+
+Proprietary. Copyright © 2026 Atlas AI.
+
+## Next steps — approval required
+
+These are intentionally not implemented:
+
+1. Introduce end-to-end OpenTelemetry tracing and approved service-level objectives.
+2. Add image signing, SBOMs, dependency scanning, and supply-chain attestations.
+3. Define market-data provider contracts, licensing controls, and event architecture.
+4. Implement the durable Stripe inbox worker only after commercial and accounting rules are approved.
+5. Define KYC, AML, sanctions, suitability, and jurisdictional control boundaries.
+6. Execute load, failover, backup-restore, and disaster-recovery exercises.
+
+No business logic should begin until the relevant domain, security, regulatory, and data
+architecture decisions are reviewed and approved.

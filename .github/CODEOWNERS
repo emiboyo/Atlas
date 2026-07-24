@@ -1,0 +1,4 @@
+* @atlas-ai/engineering
+/infrastructure/ @atlas-ai/platform
+/.github/ @atlas-ai/platform
+/packages/database/ @atlas-ai/backend

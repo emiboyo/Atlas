@@ -1,0 +1,9 @@
+.next
+.turbo
+.terraform
+node_modules
+dist
+coverage
+.pytest_cache
+pnpm-lock.yaml
+*.md
