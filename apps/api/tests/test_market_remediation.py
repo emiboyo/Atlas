@@ -14,14 +14,18 @@ from apps.api.src.market.providers import (
     DeterministicFixtureProvider,
     ProviderCandleBatch,
     ProviderError,
+    ProviderInstrument,
     ProviderListingContext,
     ProviderQuote,
+    ProviderVenue,
 )
 from apps.api.src.market.quality import ProviderDataQualityService
 from apps.api.src.market.schemas import CandlePoint, QuoteResult
 from apps.api.src.market.services import MarketService
 from packages.database.atlas_database.models.enums import (
+    AssetClass,
     CandleInterval,
+    ListingStatus,
     MarketDataStatus,
     MarketSession,
 )
@@ -153,6 +157,21 @@ def test_provider_data_quality_timestamp_currency_symbol_and_staleness() -> None
         ).status
         == MarketDataStatus.SIMULATED
     )
+    for classification in (
+        MarketDataStatus.LIVE,
+        MarketDataStatus.DELAYED,
+        MarketDataStatus.CACHED,
+        MarketDataStatus.SIMULATED,
+        MarketDataStatus.UNAVAILABLE,
+    ):
+        assert (
+            quality.quote(
+                quote(listing, now=now, status=classification),
+                listing,
+                now=now,
+            ).status
+            == classification
+        )
 
 
 def test_candle_quality_rejects_identity_currency_and_missing_provenance() -> None:
@@ -188,6 +207,56 @@ def test_candle_quality_rejects_identity_currency_and_missing_provenance() -> No
         with pytest.raises(ProviderError) as error:
             quality.candles(batch.model_copy(update=changed), listing, now=now)
         assert error.value.code == code
+
+
+def test_reference_quality_rejects_invalid_instrument_and_venue_data() -> None:
+    quality = ProviderDataQualityService(Settings(_env_file=None))
+    now = datetime(2026, 1, 15, 16, tzinfo=UTC)
+    instrument = ProviderInstrument(
+        provider="fake",
+        provider_instrument_id="instrument-1",
+        provider_symbol="SAFE.XDEV",
+        provider_exchange_code="XDEV",
+        canonical_name="Safe Development Instrument",
+        asset_class=AssetClass.EQUITY,
+        currency="GBP",
+        country_code="GB",
+        listing_status=ListingStatus.ACTIVE,
+        source_reference="fixture:instrument",
+        retrieved_at=now,
+    )
+    assert quality.instrument(instrument, now=now).currency == "GBP"
+    for changed in (
+        {"provider_symbol": ""},
+        {"country_code": "gbr"},
+        {"currency": "GB"},
+        {"retrieved_at": datetime(2026, 1, 15, 16)},
+    ):
+        with pytest.raises(ProviderError):
+            quality.instrument(instrument.model_copy(update=changed), now=now)
+
+    venue = ProviderVenue(
+        provider="fake",
+        provider_venue_code="XDEV",
+        name="Development Exchange",
+        mic="XDEV",
+        country_code="GB",
+        timezone="Europe/London",
+        currency="GBP",
+        status="active",
+        source_reference="fixture:venue",
+        retrieved_at=now,
+    )
+    assert quality.venue(venue).mic == "XDEV"
+    for changed in (
+        {"mic": "bad"},
+        {"country_code": "GBR"},
+        {"timezone": "Invalid/Timezone"},
+        {"provider_venue_code": ""},
+        {"source_reference": ""},
+    ):
+        with pytest.raises(ProviderError):
+            quality.venue(venue.model_copy(update=changed))
 
 
 class HealthRedis:
@@ -306,6 +375,13 @@ async def test_quote_provider_failure_returns_only_explicit_stale_shadow(
     )
     redis.now = 6
 
+    async def invalid(_context: ProviderListingContext) -> ProviderQuote:
+        raise ProviderError("Invalid provider result.", code="provider_response_invalid")
+
+    monkeypatch.setattr(service.provider, "get_latest_quote", invalid)
+    with pytest.raises(ProviderError, match="Invalid"):
+        await service.quote(object(), listing_id)  # type: ignore[arg-type]
+
     async def unavailable(_context: ProviderListingContext) -> ProviderQuote:
         raise ProviderError("Provider unavailable.", code="provider_unavailable")
 
@@ -318,6 +394,50 @@ async def test_quote_provider_failure_returns_only_explicit_stale_shadow(
     redis.now = 31
     with pytest.raises(ProviderError, match="unavailable"):
         await service.quote(object(), listing_id)  # type: ignore[arg-type]
+
+
+async def test_quote_freshness_uses_stale_threshold_not_cache_ttl(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        market_quote_cache_ttl_seconds=3600,
+        market_quote_stale_after_seconds=1,
+        _env_file=None,
+    )
+    service = MarketService(settings)
+    listing_id = uuid4()
+    listing = SimpleNamespace(
+        id=listing_id,
+        instrument_id=uuid4(),
+        ticker="SAFE",
+        quote_currency="GBP",
+        provider_normalised_symbol="SAFE.XDEV",
+        exchange=SimpleNamespace(mic="XDEV"),
+        provider_mappings=(
+            SimpleNamespace(
+                provider=service.provider.name,
+                provider_symbol="SAFE.XDEV",
+                provider_exchange_code="XDEV",
+            ),
+        ),
+    )
+
+    async def find_listing(_session: object, _listing_id: object) -> object:
+        return listing
+
+    async def old_live(context: ProviderListingContext) -> ProviderQuote:
+        observed = datetime.now(UTC) - timedelta(seconds=2)
+        return quote(
+            context,
+            now=observed,
+            status=MarketDataStatus.LIVE,
+        ).model_copy(update={"provider": service.provider.name})
+
+    monkeypatch.setattr(service.repository, "listing", find_listing)
+    monkeypatch.setattr(service.provider, "get_latest_quote", old_live)
+    result = await service.quote(object(), listing_id)  # type: ignore[arg-type]
+    assert result.data_status == MarketDataStatus.STALE
+    assert result.is_stale is True
 
 
 async def test_fixture_provider_rejects_unknown_instrument_without_external_io() -> None:

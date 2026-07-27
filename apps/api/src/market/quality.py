@@ -5,6 +5,7 @@ from apps.api.src.core.config import Settings
 from apps.api.src.market.providers import (
     ProviderCandleBatch,
     ProviderError,
+    ProviderInstrument,
     ProviderListingContext,
     ProviderQuote,
     ProviderVenue,
@@ -144,3 +145,39 @@ class ProviderDataQualityService:
                 "The provider venue identity is incomplete.", code="provider_response_invalid"
             )
         return venue
+
+    def instrument(
+        self,
+        instrument: ProviderInstrument,
+        *,
+        now: datetime | None = None,
+    ) -> ProviderInstrument:
+        required_identity = (
+            instrument.provider,
+            instrument.provider_instrument_id,
+            instrument.provider_symbol,
+            instrument.provider_exchange_code,
+            instrument.canonical_name,
+            instrument.source_reference,
+        )
+        if any(not value.strip() for value in required_identity):
+            raise ProviderError(
+                "The provider instrument identity is incomplete.",
+                code="provider_response_invalid",
+            )
+        country_code = instrument.country_code
+        if country_code is not None and (
+            len(country_code) != 2
+            or not country_code.isalpha()
+            or country_code != country_code.upper()
+        ):
+            raise ProviderError(
+                "The provider country code is invalid.",
+                code="provider_response_invalid",
+            )
+        return instrument.model_copy(
+            update={
+                "currency": self.currency(instrument.currency),
+                "retrieved_at": self.timestamp(instrument.retrieved_at, now=now),
+            }
+        )
