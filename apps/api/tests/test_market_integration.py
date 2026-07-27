@@ -176,6 +176,20 @@ async def test_market_and_tenant_watchlist_flows() -> None:
                 params={"q": query},
             )
             assert safe_search.status_code == 200
+        exact_name = await client.get(
+            "/api/v1/market/instruments/search",
+            headers=headers,
+            params={"q": "Nova Systems Development Equity"},
+        )
+        assert exact_name.status_code == 200
+        assert exact_name.json()["total"] >= 1
+        maximum_page = await client.get(
+            "/api/v1/market/instruments/search",
+            headers=headers,
+            params={"q": "NOVA", "page": 10000, "page_size": 100},
+        )
+        assert maximum_page.status_code == 200
+        assert maximum_page.json()["page"] == 10000
         assert (
             await client.get(
                 "/api/v1/market/instruments/search",
@@ -183,6 +197,27 @@ async def test_market_and_tenant_watchlist_flows() -> None:
                 params={"q": "", "page": 10001},
             )
         ).status_code == 422
+        assert (
+            await client.get(
+                "/api/v1/market/instruments/search",
+                headers=headers,
+                params={"q": "NOVA", "page_size": 101},
+            )
+        ).status_code == 422
+        assert (
+            await client.get(
+                "/api/v1/market/instruments/search",
+                headers=headers,
+                params={"q": "N" * 101},
+            )
+        ).status_code == 422
+        manipulated_provider = await client.get(
+            "/api/v1/market/status",
+            headers=headers,
+            params={"provider": "attacker-controlled"},
+        )
+        assert manipulated_provider.status_code == 200
+        assert manipulated_provider.json()["provider"] == "atlas_simulated"
         cached_search = await client.get(
             "/api/v1/market/instruments/search?q=NOVA", headers=headers
         )

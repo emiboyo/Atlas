@@ -22,6 +22,7 @@ from apps.api.src.market.providers import (
     DeterministicFixtureProvider,
     DisabledExternalProvider,
     MarketDataProvider,
+    ProviderError,
     ProviderListingContext,
 )
 from apps.api.src.market.quality import ProviderDataQualityService
@@ -214,7 +215,13 @@ class MarketService:
                 ),
                 context,
             )
-        except ApplicationError:
+        except ProviderError as exc:
+            if exc.code not in {
+                "provider_unavailable",
+                "provider_timeout",
+                "provider_rate_limited",
+            }:
+                raise
             stale = await self.cache.get_stale_model(cache_key, QuoteResult) if self.cache else None
             if stale is None:
                 raise
@@ -223,9 +230,11 @@ class MarketService:
                 update={"data_status": MarketDataStatus.STALE, "is_stale": True}
             )
         stale_after = quote.provider_timestamp + timedelta(
-            seconds=self.settings.market_quote_cache_ttl_seconds
+            seconds=self.settings.market_quote_stale_after_seconds
         )
-        is_stale = quote.status != MarketDataStatus.SIMULATED and datetime.now(UTC) > stale_after
+        is_stale = quote.status == MarketDataStatus.STALE or (
+            quote.status != MarketDataStatus.SIMULATED and datetime.now(UTC) > stale_after
+        )
         data_status = MarketDataStatus.STALE if is_stale else quote.status
         if is_stale:
             STALE_RESPONSES.labels(provider=self.provider.name).inc()

@@ -60,16 +60,7 @@ class MarketIngestionService:
             lambda: self.provider.search_instruments(query, 100),
         )
         for instrument in instruments:
-            if (
-                not instrument.provider_symbol.strip()
-                or not instrument.provider_exchange_code.strip()
-                or not instrument.source_reference.strip()
-            ):
-                raise ProviderError(
-                    "The provider listing identity is incomplete.",
-                    code="provider_response_invalid",
-                )
-            self.quality.currency(instrument.currency)
+            self.quality.instrument(instrument)
         await self.administration.record(
             session,
             operation_id=operation_id,
