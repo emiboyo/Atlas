@@ -1,0 +1,74 @@
+from enum import StrEnum
+
+from fastapi import status
+
+from apps.api.src.core.errors import ApplicationError
+from packages.database.atlas_database.models.enums import MembershipRole
+
+
+class Permission(StrEnum):
+    ORGANISATION_READ = "organisation:read"
+    ORGANISATION_UPDATE = "organisation:update"
+    MEMBERSHIP_READ = "membership:read"
+    MEMBERSHIP_INVITE = "membership:invite"
+    MEMBERSHIP_UPDATE = "membership:update"
+    MEMBERSHIP_REMOVE = "membership:remove"
+    PROFILE_READ_SELF = "profile:read:self"
+    PROFILE_UPDATE_SELF = "profile:update:self"
+    AUDIT_READ = "audit:read"
+    OWNERSHIP_TRANSFER = "ownership:transfer"
+    ORGANISATION_ARCHIVE = "organisation:archive"
+
+
+ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
+    MembershipRole.OWNER: frozenset(Permission),
+    MembershipRole.ADMIN: frozenset(
+        {
+            Permission.ORGANISATION_READ,
+            Permission.ORGANISATION_UPDATE,
+            Permission.MEMBERSHIP_READ,
+            Permission.MEMBERSHIP_INVITE,
+            Permission.MEMBERSHIP_UPDATE,
+            Permission.MEMBERSHIP_REMOVE,
+            Permission.PROFILE_READ_SELF,
+            Permission.PROFILE_UPDATE_SELF,
+            Permission.AUDIT_READ,
+        }
+    ),
+    MembershipRole.MEMBER: frozenset(
+        {
+            Permission.ORGANISATION_READ,
+            Permission.MEMBERSHIP_READ,
+            Permission.PROFILE_READ_SELF,
+            Permission.PROFILE_UPDATE_SELF,
+        }
+    ),
+    MembershipRole.VIEWER: frozenset(
+        {
+            Permission.ORGANISATION_READ,
+            Permission.PROFILE_READ_SELF,
+            Permission.PROFILE_UPDATE_SELF,
+        }
+    ),
+}
+
+
+class AuthorisationService:
+    def can(self, role: MembershipRole, permission: Permission) -> bool:
+        return permission in ROLE_PERMISSIONS[role]
+
+    def require_permission(self, role: MembershipRole, permission: Permission) -> None:
+        if not self.can(role, permission):
+            raise ApplicationError(
+                "You do not have permission to perform this action.",
+                code="permission_denied",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+    def require_role(self, role: MembershipRole, allowed: set[MembershipRole]) -> None:
+        if role not in allowed:
+            raise ApplicationError(
+                "You do not have the required organisation role.",
+                code="role_required",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )

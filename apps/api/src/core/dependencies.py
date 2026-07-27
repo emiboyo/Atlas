@@ -1,4 +1,4 @@
-from typing import Annotated, Any, cast
+from typing import Annotated, cast
 
 from fastapi import Depends, Request
 from redis.asyncio import Redis
@@ -11,8 +11,8 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 DatabaseSession = Annotated[AsyncSession, Depends(get_session)]
 
 
-def get_redis(request: Request) -> Redis:  # type: ignore[type-arg]
-    return cast("Redis[Any]", request.app.state.redis)
+def get_redis(request: Request) -> Redis:
+    return cast(Redis, request.app.state.redis)
 
 
 RedisClient = Annotated[Redis, Depends(get_redis)]

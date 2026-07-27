@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from apps.api.src.api.health import router as health_router
 from apps.api.src.api.metrics import router as metrics_router
@@ -44,13 +45,14 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description="The API foundation for the Atlas AI investment operating system.",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url=None if settings.environment == "production" else "/docs",
+    redoc_url=None if settings.environment == "production" else "/redoc",
+    openapi_url=None if settings.environment == "production" else "/openapi.json",
     lifespan=lifespan,
     debug=settings.debug,
 )
 
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

@@ -17,6 +17,7 @@ quote-style = "double"
 addopts = "-ra --strict-markers --strict-config"
 testpaths = ["apps/api/tests", "packages/database/tests"]
 asyncio_mode = "auto"
+cache_dir = ".cache/pytest"
 
 [tool.mypy]
 python_version = "3.12"

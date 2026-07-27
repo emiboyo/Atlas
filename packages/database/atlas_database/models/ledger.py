@@ -53,7 +53,9 @@ class LedgerAccount(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
 
-    entries: Mapped[list["LedgerEntry"]] = relationship(back_populates="account")
+    entries: Mapped[list["LedgerEntry"]] = relationship(
+        back_populates="account", overlaps="entries,transaction"
+    )
 
 
 class LedgerTransaction(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
@@ -87,7 +89,7 @@ class LedgerTransaction(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
     )
 
     entries: Mapped[list["LedgerEntry"]] = relationship(
-        back_populates="transaction", cascade="all, delete-orphan"
+        back_populates="transaction", cascade="all, delete-orphan", overlaps="account,entries"
     )
 
 
@@ -119,5 +121,9 @@ class LedgerEntry(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(38, 18), nullable=False)
     memo: Mapped[str | None] = mapped_column(String(500))
 
-    transaction: Mapped[LedgerTransaction] = relationship(back_populates="entries")
-    account: Mapped[LedgerAccount] = relationship(back_populates="entries")
+    transaction: Mapped[LedgerTransaction] = relationship(
+        back_populates="entries", overlaps="account,entries"
+    )
+    account: Mapped[LedgerAccount] = relationship(
+        back_populates="entries", overlaps="entries,transaction"
+    )

@@ -27,9 +27,10 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       ATLAS_ENVIRONMENT: development
-      ATLAS_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-atlas}:${POSTGRES_PASSWORD:-change-me-in-production}@postgres:5432/${POSTGRES_DB:-atlas}
+      ATLAS_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-atlas}:${POSTGRES_PASSWORD:-atlas-local-only}@postgres:5432/${POSTGRES_DB:-atlas}
       ATLAS_REDIS_URL: redis://redis:6379/0
       ATLAS_CORS_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
+      ATLAS_TRUSTED_HOSTS: '["localhost","127.0.0.1","api"]'
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:
@@ -48,9 +49,9 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-atlas}
       POSTGRES_USER: ${POSTGRES_USER:-atlas}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atlas-local-only}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
@@ -67,7 +68,7 @@ services:
     image: redis:7.4.5-alpine
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro

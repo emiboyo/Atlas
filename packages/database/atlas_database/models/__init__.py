@@ -9,7 +9,14 @@ from packages.database.atlas_database.models.billing import (
     PaymentLedgerLink,
     StripeWebhookEvent,
 )
-from packages.database.atlas_database.models.identity import Membership, Tenant, User
+from packages.database.atlas_database.models.identity import (
+    ClerkWebhookEvent,
+    IdentityAuditEvent,
+    Membership,
+    Tenant,
+    User,
+    UserProfile,
+)
 from packages.database.atlas_database.models.instruments import Instrument, InstrumentListing
 from packages.database.atlas_database.models.ledger import (
     LedgerAccount,
@@ -25,6 +32,8 @@ from packages.database.atlas_database.models.portfolios import (
 __all__ = [
     "BillingCustomer",
     "BillingSubscription",
+    "ClerkWebhookEvent",
+    "IdentityAuditEvent",
     "Instrument",
     "InstrumentListing",
     "InvestmentAccount",
@@ -38,4 +47,5 @@ __all__ = [
     "StripeWebhookEvent",
     "Tenant",
     "User",
+    "UserProfile",
 ]

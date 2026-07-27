@@ -41,15 +41,18 @@ def build_token(
     *,
     authorized_party: str = "http://localhost:3000",
     status: str = "active",
+    issuer: str = "https://atlas.clerk.accounts.dev",
+    audience: str | None = None,
+    expires_at: datetime | None = None,
 ) -> str:
     now = datetime.now(UTC)
     claims = {
         "sub": "user_123",
         "sid": "sess_123",
-        "iss": "https://atlas.clerk.accounts.dev",
+        "iss": issuer,
         "iat": now,
         "nbf": now - timedelta(seconds=1),
-        "exp": now + timedelta(minutes=5),
+        "exp": expires_at or now + timedelta(minutes=5),
         "azp": authorized_party,
         "sts": status,
         "v": 2,
@@ -62,6 +65,8 @@ def build_token(
             "fpm": "3,2",
         },
     }
+    if audience:
+        claims["aud"] = audience
     return jwt.encode(claims, private_key, algorithm="RS256")
 
 
@@ -158,6 +163,52 @@ async def test_rejects_invalid_token(key_pair: tuple[Any, Any]) -> None:
 
     with pytest.raises(AuthenticationRequiredError):
         await verifier.verify("not-a-jwt")
+
+
+@pytest.mark.parametrize(
+    "token_arguments",
+    [
+        {"issuer": "https://wrong-issuer.example"},
+        {"expires_at": datetime.now(UTC) - timedelta(minutes=1)},
+    ],
+)
+async def test_rejects_invalid_registered_claims(
+    key_pair: tuple[Any, Any], token_arguments: dict[str, Any]
+) -> None:
+    private_key, public_key = key_pair
+    verifier = ClerkTokenVerifier(
+        Settings(clerk_issuer_url="https://atlas.clerk.accounts.dev"),
+        StaticKeyResolver(public_key),
+    )
+
+    with pytest.raises(AuthenticationRequiredError):
+        await verifier.verify(build_token(private_key, **token_arguments))
+
+
+async def test_rejects_wrong_audience(key_pair: tuple[Any, Any]) -> None:
+    private_key, public_key = key_pair
+    verifier = ClerkTokenVerifier(
+        Settings(
+            clerk_issuer_url="https://atlas.clerk.accounts.dev",
+            clerk_audience="atlas-api",
+        ),
+        StaticKeyResolver(public_key),
+    )
+
+    with pytest.raises(AuthenticationRequiredError):
+        await verifier.verify(build_token(private_key, audience="another-api"))
+
+
+async def test_rejects_token_signed_by_unknown_key(key_pair: tuple[Any, Any]) -> None:
+    private_key, _ = key_pair
+    other_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    verifier = ClerkTokenVerifier(
+        Settings(clerk_issuer_url="https://atlas.clerk.accounts.dev"),
+        StaticKeyResolver(other_private_key.public_key()),
+    )
+
+    with pytest.raises(AuthenticationRequiredError):
+        await verifier.verify(build_token(private_key))
 
 
 async def test_unconfigured_authentication_is_unavailable() -> None:

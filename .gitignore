@@ -16,12 +16,17 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.audit-pg-*/
+.cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 .venv/
+.venv*/
 venv/
+.audit-postgres*/
+.audit-pg-password
 
 # Environment and secrets
 .env

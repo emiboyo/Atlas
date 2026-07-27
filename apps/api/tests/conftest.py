@@ -17,6 +17,8 @@ async def no_lifespan(_: FastAPI) -> AsyncIterator[None]:
 async def client() -> AsyncIterator[AsyncClient]:
     original_lifespan = app.router.lifespan_context
     app.router.lifespan_context = no_lifespan
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as test_client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as test_client:
         yield test_client
     app.router.lifespan_context = original_lifespan

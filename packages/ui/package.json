@@ -12,26 +12,26 @@
     "build": "tsc --noEmit",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "clean": "rimraf dist coverage"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "react": "19.1.0",
+    "react": "19.2.8",
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
     "@atlas/eslint-config": "workspace:*",
     "@atlas/typescript-config": "workspace:*",
-    "@types/react": "19.1.8",
-    "eslint": "^9.29.0",
+    "@types/react": "19.2.17",
+    "eslint": "9.39.5",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "react": "19.1.0"
+    "react": "19.2.8"
   }
 }

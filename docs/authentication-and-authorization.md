@@ -38,14 +38,14 @@ dependencies. `require_organization` returns a stable `organization_required` er
 
 Atlas uses permission-first authorization:
 
-| Permission pattern | Intended boundary |
-|---|---|
-| `org:portfolios:read` | View organization portfolios |
-| `org:portfolios:manage` | Create or change organization portfolios |
-| `org:members:read` | View organization membership |
-| `org:members:manage` | Invite or change members |
-| `org:billing:manage` | Change billing configuration |
-| `org:audit:read` | Read security and compliance audit events |
+| Permission pattern      | Intended boundary                         |
+| ----------------------- | ----------------------------------------- |
+| `org:portfolios:read`   | View organization portfolios              |
+| `org:portfolios:manage` | Create or change organization portfolios  |
+| `org:members:read`      | View organization membership              |
+| `org:members:manage`    | Invite or change members                  |
+| `org:billing:manage`    | Change billing configuration              |
+| `org:audit:read`        | Read security and compliance audit events |
 
 These keys document the intended Clerk configuration; no corresponding business capabilities
 exist yet. Permission dependencies are created with `require_permission("org:feature:action")`.
@@ -68,6 +68,15 @@ return `403` without revealing protected resource existence.
 - `GET /api/v1/auth/context` returns the server-verified request context for integration testing.
 
 Authentication errors use the standard Atlas error envelope and request correlation ID.
+
+Milestone 2 persists the verified Clerk subject as a unique mapping to an immutable Atlas user
+UUID. Protected resource access uses the active local user and local membership; Clerk
+organisation claims are context only and never override local tenancy. The current role and
+permission matrix is documented in `docs/authorisation-model.md`.
+
+Clerk lifecycle synchronisation uses the raw-body `/api/v1/webhooks/clerk` endpoint with Svix
+signature verification, payload limits, timestamp tolerance, an idempotent inbox, safe retry, and
+deactivation rather than hard deletion.
 
 ## Clerk dashboard checklist
 

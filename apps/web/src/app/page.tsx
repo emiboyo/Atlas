@@ -14,6 +14,7 @@ import {
   Sparkles,
   Waypoints,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@atlas/ui/button";
 import { Card } from "@atlas/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -67,12 +68,12 @@ export default function HomePage() {
           className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8"
           aria-label="Primary navigation"
         >
-          <a href="#" className="flex items-center gap-2.5" aria-label="Atlas AI home">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="Atlas AI home">
             <span className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-lg">
               <Waypoints className="size-4" />
             </span>
             <span className="font-display text-lg font-semibold tracking-tight">Atlas AI</span>
-          </a>
+          </Link>
           <div className="text-muted-foreground hidden items-center gap-8 text-sm md:flex">
             <a className="hover:text-foreground transition-colors" href="#features">
               Platform
@@ -86,8 +87,10 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button size="sm" className="hidden sm:inline-flex">
-              Join the waitlist <ArrowRight className="size-4" />
+            <Button size="sm" className="hidden sm:inline-flex" asChild>
+              <a href="#features">
+                Explore Atlas <ArrowRight className="size-4" />
+              </a>
             </Button>
           </div>
         </nav>
@@ -113,8 +116,10 @@ export default function HomePage() {
               anyone invest with confidence, from their first $10 onward.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg">
-                Get early access <ArrowRight className="size-4" />
+              <Button size="lg" asChild>
+                <a href="#features">
+                  Explore Atlas <ArrowRight className="size-4" />
+                </a>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <a href="#architecture">Explore the platform</a>
@@ -326,8 +331,10 @@ export default function HomePage() {
             <p className="text-primary-foreground/75 mx-auto mt-5 max-w-2xl">
               Join us as we build investment infrastructure for everyone.
             </p>
-            <Button size="lg" variant="secondary" className="mt-8">
-              Request early access <ArrowRight className="size-4" />
+            <Button size="lg" variant="secondary" className="mt-8" asChild>
+              <a href="#roadmap">
+                View the roadmap <ArrowRight className="size-4" />
+              </a>
             </Button>
           </div>
         </div>
@@ -344,16 +351,13 @@ export default function HomePage() {
           <p className="text-muted-foreground text-sm">
             © 2026 Atlas AI. Building the future of investing.
           </p>
-          <div className="text-muted-foreground flex gap-5 text-sm">
-            <a href="#" className="hover:text-foreground">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-foreground">
-              Security
-            </a>
-            <a href="#" className="hover:text-foreground">
-              Terms
-            </a>
+          <div
+            className="text-muted-foreground flex gap-5 text-sm"
+            aria-label="Platform principles"
+          >
+            <span>Privacy</span>
+            <span>Security</span>
+            <span>Clarity</span>
           </div>
         </div>
       </footer>
