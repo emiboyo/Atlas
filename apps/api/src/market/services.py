@@ -71,8 +71,7 @@ class MarketService:
             else DisabledExternalProvider()
         )
 
-    @staticmethod
-    def listing_summary(listing: InstrumentListing) -> ListingSummary:
+    def listing_summary(self, listing: InstrumentListing) -> ListingSummary:
         return ListingSummary(
             id=listing.id,
             instrument_id=listing.instrument_id,
@@ -81,6 +80,11 @@ class MarketService:
             currency=listing.quote_currency,
             status=listing.listing_status,
             is_primary=listing.is_primary,
+            data_availability=(
+                MarketDataStatus.SIMULATED
+                if self.settings.market_data_provider == "simulated"
+                else MarketDataStatus.UNAVAILABLE
+            ),
         )
 
     async def search(
@@ -96,10 +100,10 @@ class MarketService:
         limit = min(page_size, self.settings.market_max_search_results)
         cache_key = MarketCache.key("search", normalized.lower(), page, limit)
         if self.cache:
-            cached = await self.cache.get_json(cache_key)
+            cached = await self.cache.get_model(cache_key, MarketPage)
             if cached is not None:
                 CACHE_OPERATIONS.labels(operation="search", result="hit").inc()
-                return MarketPage.model_validate(cached)
+                return cached
             CACHE_OPERATIONS.labels(operation="search", result="miss").inc()
         rows = await self.repository.search(
             session, normalized, offset=(page - 1) * limit, limit=limit
@@ -135,10 +139,10 @@ class MarketService:
     ) -> InstrumentDetail:
         cache_key = MarketCache.key("instrument", instrument_id)
         if self.cache:
-            cached = await self.cache.get_json(cache_key)
+            cached = await self.cache.get_model(cache_key, InstrumentDetail)
             if cached is not None:
                 CACHE_OPERATIONS.labels(operation="instrument", result="hit").inc()
-                return InstrumentDetail.model_validate(cached)
+                return cached
             CACHE_OPERATIONS.labels(operation="instrument", result="miss").inc()
         instrument = await self.repository.instrument(session, instrument_id)
         if instrument is None:
@@ -171,10 +175,10 @@ class MarketService:
             raise market_not_found()
         cache_key = MarketCache.key("quote", self.provider.name, listing_id)
         if self.cache:
-            cached = await self.cache.get_json(cache_key)
+            cached = await self.cache.get_model(cache_key, QuoteResult)
             if cached is not None:
                 CACHE_OPERATIONS.labels(operation="quote", result="hit").inc()
-                return QuoteResult.model_validate(cached)
+                return cached
             CACHE_OPERATIONS.labels(operation="quote", result="miss").inc()
         started = perf_counter()
         try:
@@ -261,10 +265,10 @@ class MarketService:
             end.isoformat(),
         )
         if self.cache:
-            cached = await self.cache.get_json(cache_key)
+            cached = await self.cache.get_model(cache_key, CandleResult)
             if cached is not None:
                 CACHE_OPERATIONS.labels(operation="candles", result="hit").inc()
-                return CandleResult.model_validate(cached)
+                return cached
             CACHE_OPERATIONS.labels(operation="candles", result="miss").inc()
         started = perf_counter()
         try:

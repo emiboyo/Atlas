@@ -18,6 +18,7 @@ from apps.api.src.market.providers import (
 )
 from apps.api.src.market.schemas import (
     CandlePoint,
+    MarketStatusResponse,
     WatchlistCreate,
     WatchlistReorder,
 )
@@ -123,11 +124,23 @@ def test_candle_shape_and_watchlist_mass_assignment_validation() -> None:
 
 def test_watchlist_permissions_are_centralised() -> None:
     service = AuthorisationService()
-    assert service.can(MembershipRole.OWNER, Permission.WATCHLIST_DELETE)
-    assert service.can(MembershipRole.ADMIN, Permission.WATCHLIST_ITEM_ADD)
-    assert service.can(MembershipRole.MEMBER, Permission.WATCHLIST_CREATE)
-    assert service.can(MembershipRole.VIEWER, Permission.WATCHLIST_READ)
-    assert not service.can(MembershipRole.VIEWER, Permission.WATCHLIST_UPDATE)
+    watchlist_permissions = {
+        Permission.WATCHLIST_READ,
+        Permission.WATCHLIST_CREATE,
+        Permission.WATCHLIST_UPDATE,
+        Permission.WATCHLIST_DELETE,
+        Permission.WATCHLIST_ITEM_ADD,
+        Permission.WATCHLIST_ITEM_REMOVE,
+    }
+    expected = {
+        MembershipRole.OWNER: watchlist_permissions,
+        MembershipRole.ADMIN: watchlist_permissions,
+        MembershipRole.MEMBER: watchlist_permissions - {Permission.WATCHLIST_DELETE},
+        MembershipRole.VIEWER: {Permission.WATCHLIST_READ},
+    }
+    for role, allowed in expected.items():
+        for permission in watchlist_permissions:
+            assert service.can(role, permission) is (permission in allowed)
 
 
 class FakeRedis:
@@ -153,6 +166,8 @@ async def test_cache_hit_miss_collision_resistance_and_safe_degradation() -> Non
     first_key = cache.key("quote", "provider-a", uuid4())
     second_key = cache.key("quote", "provider-b", uuid4())
     assert first_key != second_key
+    assert cache.key("search", "a:b") != cache.key("search", "a_b")
+    assert cache.key("search", "é") != cache.key("search", "e")
 
     calls = 0
 
@@ -172,6 +187,10 @@ async def test_cache_hit_miss_collision_resistance_and_safe_degradation() -> Non
     result, hit = await failing.remember(first_key, 30, loader)
     assert result == {"status": "simulated"}
     assert hit is False
+
+    malformed_key = cache.key("status", "malformed")
+    redis.values[malformed_key] = '{"unexpected":true}'
+    assert await cache.get_model(malformed_key, MarketStatusResponse) is None
 
 
 async def test_market_service_status_and_search_boundary(
@@ -207,6 +226,10 @@ async def test_market_service_status_and_search_boundary(
         is_primary=True,
     )
     assert simulated.listing_summary(listing).symbol == "SAFE"  # type: ignore[arg-type]
+    assert (
+        disabled.listing_summary(listing).data_availability  # type: ignore[arg-type]
+        == MarketDataStatus.UNAVAILABLE
+    )
 
     with pytest.raises(ApplicationError) as error:
         await simulated.search(None, "x", page=1, page_size=10)  # type: ignore[arg-type]

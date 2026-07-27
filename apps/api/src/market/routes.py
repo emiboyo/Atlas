@@ -68,7 +68,7 @@ async def list_exchanges(
     request: Request,
     session: DatabaseSession,
     _user: ActiveUser,
-    page: Annotated[int, Query(ge=1)] = 1,
+    page: Annotated[int, Query(ge=1, le=10_000)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
 ) -> list[ExchangeResponse]:
     rows = await market_service(request).repository.exchanges(
@@ -83,7 +83,7 @@ async def search_instruments(
     session: DatabaseSession,
     _user: ActiveUser,
     q: Annotated[str, Query(min_length=2, max_length=100)],
-    page: Annotated[int, Query(ge=1)] = 1,
+    page: Annotated[int, Query(ge=1, le=10_000)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
 ) -> MarketPage:
     return await market_service(request).search(session, q, page=page, page_size=page_size)
@@ -155,7 +155,7 @@ async def list_watchlists(
     tenant_id: UUID,
     session: DatabaseSession,
     user: ActiveUser,
-    page: Annotated[int, Query(ge=1)] = 1,
+    page: Annotated[int, Query(ge=1, le=10_000)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
 ) -> list[WatchlistResponse]:
     service = WatchlistService(get_settings())

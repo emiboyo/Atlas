@@ -1,20 +1,28 @@
 import json
 from collections.abc import Awaitable, Callable
+from hashlib import sha256
 from typing import TypeVar
 
+from pydantic import BaseModel, ValidationError
 from redis.asyncio import Redis
 
 T = TypeVar("T")
+ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 class MarketCache:
-    def __init__(self, redis: Redis) -> None:  # type: ignore[type-arg]
+    def __init__(self, redis: Redis) -> None:
         self.redis = redis
 
     @staticmethod
     def key(namespace: str, *parts: object) -> str:
-        safe_parts = [str(part).replace(":", "_")[:160] for part in parts]
-        return "atlas:market:v1:" + namespace + ":" + ":".join(safe_parts)
+        encoded_parts = json.dumps(
+            [str(part) for part in parts],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode()
+        digest = sha256(encoded_parts).hexdigest()
+        return f"atlas:market:v1:{namespace}:{digest}"
 
     async def get_json(self, key: str) -> object | None:
         try:
@@ -28,6 +36,15 @@ class MarketCache:
             await self.redis.set(key, json.dumps(value, default=str), ex=ttl_seconds)
         except Exception:  # noqa: BLE001 -- the database/provider remains authoritative
             return
+
+    async def get_model(self, key: str, model: type[ModelT]) -> ModelT | None:
+        cached = await self.get_json(key)
+        if cached is None:
+            return None
+        try:
+            return model.model_validate(cached)
+        except ValidationError:
+            return None
 
     async def remember(
         self,
