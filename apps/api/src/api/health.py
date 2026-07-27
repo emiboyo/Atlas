@@ -28,7 +28,7 @@ async def liveness() -> HealthStatus:
 async def readiness(request: Request, response: Response) -> ReadinessStatus:
     dependencies: dict[str, str] = {}
     engine: AsyncEngine = request.app.state.database_engine
-    redis = cast(Redis, request.app.state.redis)  # type: ignore[type-arg]
+    redis = cast(Redis, request.app.state.redis)
 
     try:
         async with engine.connect() as connection:

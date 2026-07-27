@@ -218,7 +218,18 @@ class QuoteObservation(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
         CheckConstraint("price IS NULL OR price >= 0", name="price_non_negative"),
         CheckConstraint("bid IS NULL OR bid >= 0", name="bid_non_negative"),
         CheckConstraint("ask IS NULL OR ask >= 0", name="ask_non_negative"),
+        CheckConstraint("bid_size IS NULL OR bid_size >= 0", name="bid_size_non_negative"),
+        CheckConstraint("ask_size IS NULL OR ask_size >= 0", name="ask_size_non_negative"),
+        CheckConstraint("open IS NULL OR open >= 0", name="open_non_negative"),
+        CheckConstraint("high IS NULL OR high >= 0", name="high_non_negative"),
+        CheckConstraint("low IS NULL OR low >= 0", name="low_non_negative"),
+        CheckConstraint(
+            "previous_close IS NULL OR previous_close >= 0",
+            name="previous_close_non_negative",
+        ),
         CheckConstraint("volume IS NULL OR volume >= 0", name="volume_non_negative"),
+        CheckConstraint("delay_seconds IS NULL OR delay_seconds >= 0", name="delay_non_negative"),
+        CheckConstraint("length(currency) = 3", name="currency_iso_length"),
         Index(
             "ix_quote_listing_provider_timestamp",
             "listing_id",
@@ -288,7 +299,12 @@ class HistoricalCandle(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
         CheckConstraint("high >= low", name="high_not_below_low"),
         CheckConstraint("open BETWEEN low AND high", name="open_in_range"),
         CheckConstraint("close BETWEEN low AND high", name="close_in_range"),
+        CheckConstraint(
+            "adjusted_close IS NULL OR adjusted_close >= 0",
+            name="adjusted_close_non_negative",
+        ),
         CheckConstraint("volume IS NULL OR volume >= 0", name="volume_non_negative"),
+        CheckConstraint("length(currency) = 3", name="currency_iso_length"),
         Index(
             "ix_candles_listing_interval_start",
             "listing_id",

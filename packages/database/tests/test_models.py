@@ -136,6 +136,15 @@ def test_market_identity_and_observation_constraints() -> None:
     assert "ck_historical_candles_high_not_below_low" in constraint_names(
         HistoricalCandle.__tablename__, CheckConstraint
     )
+    assert "ck_historical_candles_adjusted_close_non_negative" in constraint_names(
+        HistoricalCandle.__tablename__, CheckConstraint
+    )
+    assert "ck_quote_observations_previous_close_non_negative" in constraint_names(
+        QuoteObservation.__tablename__, CheckConstraint
+    )
+    assert "ck_quote_observations_bid_size_non_negative" in constraint_names(
+        QuoteObservation.__tablename__, CheckConstraint
+    )
     assert "uq_watchlist_items_listing" in constraint_names(
         WatchlistItem.__tablename__, UniqueConstraint
     )
