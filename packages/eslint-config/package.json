@@ -7,10 +7,9 @@
     "./next": "./next.mjs",
     "./react": "./react.mjs"
   },
-  "dependencies": {
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.29.0",
-    "eslint-config-next": "^15.3.4",
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "eslint-config-next": "16.2.11",
     "typescript-eslint": "^8.34.1"
   },
   "peerDependencies": {

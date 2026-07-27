@@ -4,6 +4,7 @@ from packages.database.atlas_database.base import Base
 from packages.database.atlas_database.models import (
     BillingCustomer,
     BillingSubscription,
+    IdentityAuditEvent,
     Instrument,
     InvestmentAccount,
     LedgerEntry,
@@ -12,6 +13,8 @@ from packages.database.atlas_database.models import (
     PositionSnapshot,
     StripeWebhookEvent,
     Tenant,
+    User,
+    UserProfile,
 )
 
 
@@ -41,6 +44,9 @@ def test_all_foundation_models_are_registered() -> None:
         "billing_subscriptions",
         "stripe_webhook_events",
         "payment_ledger_links",
+        "user_profiles",
+        "identity_audit_events",
+        "clerk_webhook_events",
     }.issubset(Base.metadata.tables)
 
 
@@ -81,6 +87,8 @@ def test_ledger_has_integrity_constraints() -> None:
 
 def test_identity_and_account_external_ids_are_unique() -> None:
     assert Tenant.__table__.c.clerk_organization_id.unique
+    assert User.__table__.c.clerk_user_id.unique
+    assert UserProfile.__table__.c.user_id.unique
     assert "uq_accounts_provider_id" in constraint_names(
         InvestmentAccount.__tablename__, UniqueConstraint
     )
@@ -95,3 +103,8 @@ def test_billing_projections_use_unique_stripe_identifiers() -> None:
     assert BillingCustomer.__table__.c.stripe_customer_id.unique
     assert BillingSubscription.__table__.c.stripe_subscription_id.unique
     assert StripeWebhookEvent.__table__.c.stripe_event_id.unique
+
+
+def test_identity_audit_events_have_no_update_timestamp() -> None:
+    assert "created_at" in IdentityAuditEvent.__table__.c
+    assert "updated_at" not in IdentityAuditEvent.__table__.c

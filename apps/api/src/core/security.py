@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Annotated, Any, Literal, Protocol, cast
 
 import jwt
@@ -48,6 +49,7 @@ class Principal(BaseModel):
 
     user_id: str
     session_id: str
+    issued_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     organization_id: str | None = None
     organization_slug: str | None = None
     organization_role: str | None = None
@@ -166,6 +168,7 @@ class ClerkTokenVerifier:
         return Principal(
             user_id=claims.sub,
             session_id=claims.sid,
+            issued_at=datetime.fromtimestamp(claims.iat, tz=UTC),
             organization_id=organization.id if organization else None,
             organization_slug=organization.slg if organization else None,
             organization_role=f"org:{organization.rol}" if organization else None,
@@ -201,6 +204,7 @@ def create_token_verifier(settings: Settings) -> TokenVerifier:
             settings.clerk_jwks_url,
             cache_keys=True,
             lifespan=settings.clerk_jwks_cache_ttl_seconds,
+            timeout=settings.clerk_jwks_timeout_seconds,
         )
     )
     return ClerkTokenVerifier(settings, resolver)
@@ -222,6 +226,22 @@ async def get_current_principal(
 
 
 CurrentPrincipal = Annotated[Principal, Depends(get_current_principal)]
+
+
+async def get_optional_principal(
+    request: Request,
+    verifier: Annotated[TokenVerifier, Depends(get_token_verifier)],
+) -> Principal | None:
+    authorization = request.headers.get("authorization", "")
+    if not authorization:
+        return None
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise AuthenticationRequiredError()
+    return await verifier.verify(token)
+
+
+OptionalPrincipal = Annotated[Principal | None, Depends(get_optional_principal)]
 
 
 def require_organization(principal: CurrentPrincipal) -> Principal:

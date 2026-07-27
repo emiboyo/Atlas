@@ -58,7 +58,7 @@ JSON object:
   "redis_url": "rediss://:token@...",
   "clerk_issuer_url": "https://...",
   "clerk_jwks_url": "https://.../.well-known/jwks.json",
-  "stripe_secret_key": "sk_live_...",
+  "stripe_secret_key": "REPLACE_WITH_PRODUCTION_STRIPE_SECRET",
   "stripe_webhook_secret": "whsec_..."
 }
 ```

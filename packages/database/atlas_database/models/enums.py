@@ -4,7 +4,41 @@ from enum import StrEnum
 class TenantStatus(StrEnum):
     ACTIVE = "active"
     SUSPENDED = "suspended"
+    ARCHIVED = "archived"
     CLOSED = "closed"
+
+
+class TenantType(StrEnum):
+    PERSONAL = "personal"
+    TEAM = "team"
+
+
+class UserStatus(StrEnum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    DEACTIVATED = "deactivated"
+
+
+class PlatformRole(StrEnum):
+    USER = "user"
+    SUPPORT = "support"
+    COMPLIANCE = "compliance"
+    PLATFORM_ADMIN = "platform_admin"
+
+
+class OnboardingStatus(StrEnum):
+    NOT_STARTED = "not_started"
+    PROFILE_REQUIRED = "profile_required"
+    WORKSPACE_REQUIRED = "workspace_required"
+    COMPLETED = "completed"
+
+
+class MembershipRole(StrEnum):
+    OWNER = "owner"
+    ADMIN = "admin"
+    MEMBER = "member"
+    VIEWER = "viewer"
 
 
 class MembershipStatus(StrEnum):
@@ -12,6 +46,13 @@ class MembershipStatus(StrEnum):
     INVITED = "invited"
     SUSPENDED = "suspended"
     REMOVED = "removed"
+
+
+class IdentityWebhookStatus(StrEnum):
+    PENDING = "pending"
+    PROCESSED = "processed"
+    FAILED = "failed"
+    IGNORED = "ignored"
 
 
 class AccountType(StrEnum):

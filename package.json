@@ -7,14 +7,20 @@
     "node": ">=20.0.0",
     "pnpm": ">=10.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.23",
+      "sharp": "0.35.3"
+    }
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write --ignore-unknown apps packages infrastructure docs docker scripts .github package.json pnpm-workspace.yaml turbo.json docker-compose.yml README.md .prettierrc",
+    "format:check": "prettier --check --ignore-unknown apps packages infrastructure docs docker scripts .github package.json pnpm-workspace.yaml turbo.json docker-compose.yml README.md .prettierrc",
     "api:dev": "python -m uvicorn apps.api.src.main:app --reload --host 0.0.0.0 --port 8000",
     "api:test": "pytest apps/api/tests",
     "api:lint": "ruff check apps packages/database",

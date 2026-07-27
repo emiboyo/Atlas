@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_v1_prefix: str = "/api/v1"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    trusted_hosts: list[str] = Field(
+        default_factory=lambda: ["localhost", "127.0.0.1", "testserver"]
+    )
 
     database_url: SecretStr = SecretStr(
         "postgresql+asyncpg://atlas:change-me-in-production@localhost:5432/atlas"
@@ -36,10 +39,47 @@ class Settings(BaseSettings):
     clerk_audience: str | None = None
     clerk_authorized_parties: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
     clerk_jwks_cache_ttl_seconds: int = Field(default=3600, ge=60, le=86400)
+    clerk_jwks_timeout_seconds: int = Field(default=5, ge=1, le=30)
+    clerk_webhook_secret: SecretStr = SecretStr("")
+    clerk_webhook_max_bytes: int = Field(default=262_144, ge=1024, le=1_048_576)
+    clerk_webhook_tolerance_seconds: int = Field(default=300, ge=60, le=900)
     stripe_secret_key: SecretStr = SecretStr("")
     stripe_webhook_secret: SecretStr = SecretStr("")
     stripe_webhook_max_bytes: int = Field(default=1_048_576, ge=1024, le=10_485_760)
     otel_exporter_otlp_endpoint: str = ""
+
+    @model_validator(mode="after")
+    def validate_production_safety(self) -> "Settings":
+        if self.environment != "production":
+            return self
+
+        unsafe_configuration: list[str] = []
+        database_url = self.database_url.get_secret_value()
+        redis_url = self.redis_url.get_secret_value()
+
+        if self.debug:
+            unsafe_configuration.append("ATLAS_DEBUG must be false")
+        if "localhost" in database_url or "atlas-local-only" in database_url:
+            unsafe_configuration.append("ATLAS_DATABASE_URL must use production credentials")
+        if "localhost" in redis_url:
+            unsafe_configuration.append("ATLAS_REDIS_URL must use the production service")
+        if not self.cors_origins or any(
+            origin == "*" or "localhost" in origin for origin in self.cors_origins
+        ):
+            unsafe_configuration.append("ATLAS_CORS_ORIGINS must contain production origins")
+        if not self.trusted_hosts or any(
+            host == "*" or host in {"localhost", "127.0.0.1", "testserver"}
+            for host in self.trusted_hosts
+        ):
+            unsafe_configuration.append("ATLAS_TRUSTED_HOSTS must contain production hosts")
+        if not self.clerk_issuer_url or not self.clerk_jwks_url:
+            unsafe_configuration.append("Clerk issuer and JWKS URLs are required")
+        if not self.clerk_webhook_secret.get_secret_value():
+            unsafe_configuration.append("ATLAS_CLERK_WEBHOOK_SECRET is required")
+
+        if unsafe_configuration:
+            raise ValueError("Unsafe production configuration: " + "; ".join(unsafe_configuration))
+        return self
 
 
 @lru_cache

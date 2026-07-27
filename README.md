@@ -9,6 +9,11 @@ business logic.
 
 ## Architecture
 
+Identity and tenancy are split across Clerk and Atlas. Clerk authenticates users and signs
+sessions; FastAPI verifies those tokens and authorises access using the local Atlas user,
+workspace, membership, and permission model. See `docs/identity-architecture.md`,
+`docs/authorisation-model.md`, and `docs/onboarding.md`.
+
 ```text
                          ┌──────────────────────────────┐
                          │ Next.js / Vercel             │
@@ -51,9 +56,9 @@ Stripe integration boundaries are described in
 
 ## Prerequisites
 
-- Node.js 20+ (22 recommended)
+- Node.js 22.14.0 (see `.nvmrc` and `.node-version`)
 - pnpm 10.12.1 through Corepack
-- Python 3.12
+- Python 3.12.10 (see `.python-version`)
 - Docker Engine with Compose v2
 - Git
 
@@ -78,8 +83,23 @@ macOS or Linux:
 ```sh
 corepack enable
 corepack prepare pnpm@10.12.1 --activate
-pnpm install
+pnpm install --frozen-lockfile
 python -m venv .venv
+```
+
+Activate the virtual environment, then install the pinned Python dependencies:
+
+```sh
+# macOS/Linux
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r apps/api/requirements-dev.txt
+```
+
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 python -m pip install -r apps/api/requirements-dev.txt
 ```
 
@@ -102,16 +122,16 @@ production environments.
 docker compose up --build
 ```
 
-| Service | URL |
-|---|---|
-| Web | http://localhost:3000 |
-| API v1 | http://localhost:8000/api/v1/ |
-| Swagger UI | http://localhost:8000/docs |
-| ReDoc | http://localhost:8000/redoc |
-| OpenAPI schema | http://localhost:8000/openapi.json |
-| Liveness | http://localhost:8000/health/live |
-| Readiness | http://localhost:8000/health/ready |
-| Prometheus metrics | http://localhost:8000/metrics |
+| Service            | URL                                |
+| ------------------ | ---------------------------------- |
+| Web                | http://localhost:3000              |
+| API v1             | http://localhost:8000/api/v1/      |
+| Swagger UI         | http://localhost:8000/docs         |
+| ReDoc              | http://localhost:8000/redoc        |
+| OpenAPI schema     | http://localhost:8000/openapi.json |
+| Liveness           | http://localhost:8000/health/live  |
+| Readiness          | http://localhost:8000/health/ready |
+| Prometheus metrics | http://localhost:8000/metrics      |
 
 Stop services with `docker compose down`. Add `--volumes` only when you intentionally want to
 delete local PostgreSQL and Redis data.
@@ -131,8 +151,8 @@ The root `dev` task runs the Next.js development server. Start the API in anothe
 pnpm api:dev
 ```
 
-When running the API on the host, change database and Redis hosts in `apps/api/.env` from
-`postgres` and `redis` to `localhost`.
+The application examples use `localhost` for native development. Compose injects the internal
+service names `postgres` and `redis` into the API container.
 
 ## Test and verify
 
@@ -172,8 +192,8 @@ behavior. Deploy expand-and-contract schema changes for zero-downtime releases.
 ### Web on Vercel
 
 Import the repository, select `apps/web` as the project root, and configure variables from
-`apps/web/.env.example`. Use separate Clerk and Stripe instances per environment. Vercel builds
-the standalone Next.js output using the checked-in configuration.
+`apps/web/.env.example`. Use separate Clerk and Stripe instances per environment. Vercel uses its
+native Next.js output; the Docker build explicitly enables standalone output for its runtime image.
 
 ### API and data on AWS
 
@@ -260,6 +280,14 @@ atlas-ai/
 - `GET /metrics` exposes Prometheus-format process and request metrics.
 - Every API response carries `X-Request-ID`; inbound IDs are preserved for distributed tracing.
 - Swagger and ReDoc derive from the same OpenAPI contract used by clients.
+
+## Developer guides
+
+- [Local development](docs/local-development.md)
+- [Testing](docs/testing.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Release readiness](docs/release-readiness.md)
+- [Milestone 1 foundation audit](docs/milestone-1-audit.md)
 
 ## License
 

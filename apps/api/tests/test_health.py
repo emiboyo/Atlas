@@ -62,3 +62,12 @@ async def test_metrics_are_prometheus_formatted(client: AsyncClient) -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain")
     assert "atlas_http_requests_total" in response.text
+
+
+async def test_not_found_errors_use_stable_schema(client: AsyncClient) -> None:
+    response = await client.get("/does-not-exist")
+
+    assert response.status_code == 404
+    body = response.json()
+    assert body["error"]["code"] == "not_found"
+    assert body["error"]["request_id"] == response.headers["X-Request-ID"]
