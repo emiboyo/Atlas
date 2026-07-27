@@ -38,3 +38,12 @@ Protected access fails closed when Clerk is absent or unavailable. Browser-suppl
 platform roles, subjects, and tenant identifiers are never authorisation inputs. Tokens, cookies,
 authorisation headers, webhook secrets, and full webhook bodies are excluded from persistence and
 logs.
+
+## Market-data security
+
+Market routes require a verified active Atlas user. Watchlists additionally require a
+server-resolved membership and central permission. Browser symbols, tenant IDs, provider names,
+and roles are never authorities. Search is bounded and parameterised; candle ranges and
+watchlist sizes are capped. Provider credentials remain server-side. Simulated/stale status and
+provenance cannot be promoted to live by browser input or caching. See
+`docs/market-data-threat-model.md`.

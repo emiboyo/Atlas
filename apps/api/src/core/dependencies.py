@@ -11,8 +11,8 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 DatabaseSession = Annotated[AsyncSession, Depends(get_session)]
 
 
-def get_redis(request: Request) -> Redis:
-    return cast(Redis, request.app.state.redis)
+def get_redis(request: Request) -> Redis:  # type: ignore[type-arg]
+    return cast(Redis, request.app.state.redis)  # type: ignore[type-arg]
 
 
 RedisClient = Annotated[Redis, Depends(get_redis)]

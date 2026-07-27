@@ -306,3 +306,16 @@ These are intentionally not implemented:
 
 No business logic should begin until the relevant domain, security, regulatory, and data
 architecture decisions are reviewed and approved.
+
+## Read-only market-data foundation
+
+Milestone 3 adds authenticated instrument discovery and tenant watchlists. Instruments, venue
+listings, provider mappings, quote observations, and candles use immutable Atlas IDs and
+fixed-precision values. The included provider is deterministic simulated development data only.
+No trading, orders, recommendations, or real-time claims exist.
+
+```powershell
+python -m apps.api.src.market.cli seed-development-data
+```
+
+See `docs/market-data-architecture.md`, `docs/instrument-model.md`, and `docs/watchlists.md`.

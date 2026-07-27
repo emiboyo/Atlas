@@ -52,3 +52,8 @@ The audit report is authoritative. Any criterion marked blocked or failed there 
 recorded before the milestone can be promoted. In particular, an offline Alembic pass cannot
 replace real PostgreSQL execution, and a valid Compose file cannot replace starting healthy
 containers.
+
+Milestone 3 does not approve a production market-data provider, entitlement, exchange licence,
+redistribution right, service-level objective, freshness policy, commercial quota, corporate
+action process, or real-time claim. The deterministic provider is private-development test data.
+Production remains prohibited under the existing governance decisions.

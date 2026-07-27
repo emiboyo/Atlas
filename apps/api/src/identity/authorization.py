@@ -18,6 +18,12 @@ class Permission(StrEnum):
     AUDIT_READ = "audit:read"
     OWNERSHIP_TRANSFER = "ownership:transfer"
     ORGANISATION_ARCHIVE = "organisation:archive"
+    WATCHLIST_READ = "watchlist:read"
+    WATCHLIST_CREATE = "watchlist:create"
+    WATCHLIST_UPDATE = "watchlist:update"
+    WATCHLIST_DELETE = "watchlist:delete"
+    WATCHLIST_ITEM_ADD = "watchlist:item:add"
+    WATCHLIST_ITEM_REMOVE = "watchlist:item:remove"
 
 
 ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
@@ -33,6 +39,12 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.PROFILE_READ_SELF,
             Permission.PROFILE_UPDATE_SELF,
             Permission.AUDIT_READ,
+            Permission.WATCHLIST_READ,
+            Permission.WATCHLIST_CREATE,
+            Permission.WATCHLIST_UPDATE,
+            Permission.WATCHLIST_DELETE,
+            Permission.WATCHLIST_ITEM_ADD,
+            Permission.WATCHLIST_ITEM_REMOVE,
         }
     ),
     MembershipRole.MEMBER: frozenset(
@@ -41,6 +53,11 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.MEMBERSHIP_READ,
             Permission.PROFILE_READ_SELF,
             Permission.PROFILE_UPDATE_SELF,
+            Permission.WATCHLIST_READ,
+            Permission.WATCHLIST_CREATE,
+            Permission.WATCHLIST_UPDATE,
+            Permission.WATCHLIST_ITEM_ADD,
+            Permission.WATCHLIST_ITEM_REMOVE,
         }
     ),
     MembershipRole.VIEWER: frozenset(
@@ -48,6 +65,7 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.ORGANISATION_READ,
             Permission.PROFILE_READ_SELF,
             Permission.PROFILE_UPDATE_SELF,
+            Permission.WATCHLIST_READ,
         }
     ),
 }

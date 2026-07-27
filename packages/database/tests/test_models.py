@@ -4,6 +4,8 @@ from packages.database.atlas_database.base import Base
 from packages.database.atlas_database.models import (
     BillingCustomer,
     BillingSubscription,
+    Exchange,
+    HistoricalCandle,
     IdentityAuditEvent,
     Instrument,
     InvestmentAccount,
@@ -11,10 +13,14 @@ from packages.database.atlas_database.models import (
     LedgerTransaction,
     Portfolio,
     PositionSnapshot,
+    ProviderSymbolMapping,
+    QuoteObservation,
     StripeWebhookEvent,
     Tenant,
     User,
     UserProfile,
+    Watchlist,
+    WatchlistItem,
 )
 
 
@@ -47,6 +53,12 @@ def test_all_foundation_models_are_registered() -> None:
         "user_profiles",
         "identity_audit_events",
         "clerk_webhook_events",
+        "exchanges",
+        "provider_symbol_mappings",
+        "quote_observations",
+        "historical_candles",
+        "watchlists",
+        "watchlist_items",
     }.issubset(Base.metadata.tables)
 
 
@@ -55,6 +67,9 @@ def test_financial_values_use_fixed_precision() -> None:
         (PositionSnapshot, "quantity"),
         (PositionSnapshot, "cost_basis"),
         (LedgerEntry, "amount"),
+        (QuoteObservation, "price"),
+        (HistoricalCandle, "open"),
+        (HistoricalCandle, "close"),
     ]:
         column_type = model.__table__.c[column_name].type
         assert column_type.precision == 38
@@ -108,3 +123,22 @@ def test_billing_projections_use_unique_stripe_identifiers() -> None:
 def test_identity_audit_events_have_no_update_timestamp() -> None:
     assert "created_at" in IdentityAuditEvent.__table__.c
     assert "updated_at" not in IdentityAuditEvent.__table__.c
+
+
+def test_market_identity_and_observation_constraints() -> None:
+    assert "uq_exchanges_mic" in constraint_names(Exchange.__tablename__, UniqueConstraint)
+    assert "uq_provider_symbol_namespace" in constraint_names(
+        ProviderSymbolMapping.__tablename__, UniqueConstraint
+    )
+    assert "uq_candle_observation" in constraint_names(
+        HistoricalCandle.__tablename__, UniqueConstraint
+    )
+    assert "ck_historical_candles_high_not_below_low" in constraint_names(
+        HistoricalCandle.__tablename__, CheckConstraint
+    )
+    assert "uq_watchlist_items_listing" in constraint_names(
+        WatchlistItem.__tablename__, UniqueConstraint
+    )
+    assert "uq_watchlists_tenant_name" in constraint_names(
+        Watchlist.__tablename__, UniqueConstraint
+    )

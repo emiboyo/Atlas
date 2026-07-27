@@ -117,3 +117,14 @@ docker compose down --volumes
 ```
 
 The second command is destructive and should only be used for disposable local data.
+
+## Simulated market data
+
+```powershell
+python -m alembic -c packages/database/alembic.ini upgrade head
+python -m apps.api.src.market.cli seed-development-data
+```
+
+Seeding is idempotent, performs no network requests, and refuses production mode. Use
+`ATLAS_MARKET_DATA_PROVIDER=simulated`; `disabled` exercises the unavailable-provider boundary.
+Every value is a deterministic fixture and must remain visibly labelled simulated.

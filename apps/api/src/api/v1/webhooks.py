@@ -38,7 +38,7 @@ def validate_content_length(request: Request, max_payload_bytes: int) -> None:
             raise ApplicationError(
                 "The webhook payload is too large.",
                 code="webhook_payload_too_large",
-                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             )
 
 
@@ -68,7 +68,7 @@ async def receive_stripe_webhook(
         raise ApplicationError(
             "The webhook payload is too large.",
             code="webhook_payload_too_large",
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
         )
 
     event = verifier.verify(payload, stripe_signature)
@@ -102,7 +102,7 @@ async def receive_clerk_webhook(
         raise ApplicationError(
             "The webhook payload is too large.",
             code="webhook_payload_too_large",
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
         )
     event = verifier.verify(
         payload,

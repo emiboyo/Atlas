@@ -82,3 +82,10 @@ database engine.
 - Verify tenant boundaries, monetary precision, idempotency, and append-only behavior at the
   database level when those concerns are changed.
 - Add regression coverage with every repair.
+
+Market integration tests use a PostgreSQL database migrated to head through
+`ATLAS_TEST_DATABASE_URL`. They seed deterministic fixtures and verify exact-symbol ranking,
+duplicate venue symbols, simulated quotes/candles, cross-tenant denial, viewer denial, archival,
+uniqueness, and audit paths. Unit tests cover malformed candles, provider unavailability,
+unsupported intervals, bounded schemas, permissions, cache hit/miss, key separation, and Redis
+failure degradation. No test contacts a market-data vendor.

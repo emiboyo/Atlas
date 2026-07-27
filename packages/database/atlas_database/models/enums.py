@@ -71,6 +71,13 @@ class AccountStatus(StrEnum):
 
 
 class AssetClass(StrEnum):
+    EQUITY = "equity"
+    EXCHANGE_TRADED_FUND = "exchange_traded_fund"
+    FOREIGN_EXCHANGE = "foreign_exchange"
+    CRYPTOCURRENCY = "cryptocurrency"
+    BOND = "bond"
+    FUND = "fund"
+    OTHER = "other"
     STOCK = "stock"
     ETF = "etf"
     FOREX = "forex"
@@ -83,7 +90,63 @@ class AssetClass(StrEnum):
 class InstrumentStatus(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
+    SUSPENDED = "suspended"
     DELISTED = "delisted"
+
+
+class VenueStatus(StrEnum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+
+class ListingStatus(StrEnum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    DELISTED = "delisted"
+    INACTIVE = "inactive"
+
+
+class ProviderMappingStatus(StrEnum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+
+class MarketDataStatus(StrEnum):
+    LIVE = "live"
+    DELAYED = "delayed"
+    END_OF_DAY = "end_of_day"
+    CACHED = "cached"
+    STALE = "stale"
+    SIMULATED = "simulated"
+    UNAVAILABLE = "unavailable"
+
+
+class MarketSession(StrEnum):
+    PRE_MARKET = "pre_market"
+    REGULAR = "regular"
+    AFTER_HOURS = "after_hours"
+    CLOSED = "closed"
+    UNKNOWN = "unknown"
+
+
+class CandleInterval(StrEnum):
+    ONE_MINUTE = "1m"
+    FIVE_MINUTES = "5m"
+    FIFTEEN_MINUTES = "15m"
+    ONE_HOUR = "1h"
+    ONE_DAY = "1d"
+    ONE_WEEK = "1w"
+    ONE_MONTH = "1mo"
+
+
+class WatchlistVisibility(StrEnum):
+    PRIVATE = "private"
+    TENANT = "tenant"
+
+
+class WatchlistStatus(StrEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
 
 
 class LedgerAccountType(StrEnum):
