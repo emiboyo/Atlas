@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { atlasApi } from "@/lib/api-client";
+import { MarketDataState } from "@/components/market-data-state";
 
 type Listing = {
   id: string;
@@ -70,9 +71,8 @@ export function MarketListing({ listingId }: { listingId: string }) {
           {listing.currency} · {listing.status} · {listing.exchange.timezone}
         </p>
       </header>
-      <div className="mt-8 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4">
-        <strong className="capitalize">{candles.data_status} development data</strong>
-        <p className="mt-1 text-sm">{candles.disclaimer}</p>
+      <div className="mt-8">
+        <MarketDataState status={candles.data_status} message={candles.disclaimer} />
       </div>
       <section className="mt-8 overflow-x-auto rounded-2xl border border-white/10">
         <table className="w-full min-w-[700px] text-left text-sm">

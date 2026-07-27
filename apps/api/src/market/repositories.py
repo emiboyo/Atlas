@@ -101,6 +101,7 @@ class MarketRepository:
                 .options(
                     selectinload(InstrumentListing.instrument),
                     selectinload(InstrumentListing.exchange),
+                    selectinload(InstrumentListing.provider_mappings),
                 )
             ),
         )

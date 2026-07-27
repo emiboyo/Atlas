@@ -14,6 +14,7 @@ from apps.api.src.market.providers import (
     DeterministicFixtureProvider,
     DisabledExternalProvider,
     ProviderError,
+    ProviderListingContext,
     ProviderQuote,
 )
 from apps.api.src.market.schemas import (
@@ -30,12 +31,21 @@ from packages.database.atlas_database.models.enums import (
 )
 
 
+def provider_listing() -> ProviderListingContext:
+    return ProviderListingContext(
+        listing_id=uuid4(),
+        provider_symbol="SAFE.XDEV",
+        provider_venue_code="XDEV",
+        currency="GBP",
+    )
+
+
 async def test_deterministic_provider_is_simulated_and_repeatable() -> None:
     provider = DeterministicFixtureProvider()
-    listing_id = uuid4()
+    listing = provider_listing()
 
-    first = await provider.get_latest_quote(listing_id)
-    second = await provider.get_latest_quote(listing_id)
+    first = await provider.get_latest_quote(listing)
+    second = await provider.get_latest_quote(listing)
 
     assert first.price == second.price
     assert first.provider_timestamp == datetime(2026, 1, 15, 16, tzinfo=UTC)
@@ -45,30 +55,44 @@ async def test_deterministic_provider_is_simulated_and_repeatable() -> None:
 
 async def test_provider_rejects_unsupported_interval_and_disabled_boundary() -> None:
     provider = DeterministicFixtureProvider()
+    listing = provider_listing()
     start = datetime(2026, 1, 1, tzinfo=UTC)
     with pytest.raises(ProviderError) as error:
         await provider.get_historical_candles(
-            uuid4(), CandleInterval.ONE_MINUTE, start, start + timedelta(days=1)
+            listing, CandleInterval.ONE_MINUTE, start, start + timedelta(days=1)
         )
     assert error.value.code == "unsupported_interval"
 
     with pytest.raises(ProviderError) as error:
-        await DisabledExternalProvider().get_latest_quote(uuid4())
+        await DisabledExternalProvider().get_latest_quote(listing)
     assert error.value.code == "provider_unavailable"
 
     with pytest.raises(ProviderError) as error:
         await DisabledExternalProvider().get_historical_candles(
-            uuid4(), CandleInterval.ONE_DAY, start, start + timedelta(days=1)
+            listing, CandleInterval.ONE_DAY, start, start + timedelta(days=1)
         )
     assert error.value.code == "provider_unavailable"
-    assert await provider.health_check() is True
-    assert await DisabledExternalProvider().health_check() is False
+    assert (await provider.get_health()).available is True
+    assert (await DisabledExternalProvider().get_health()).available is False
 
 
-def test_provider_rejects_negative_price_seed() -> None:
-    with pytest.raises(ProviderError) as error:
-        ProviderQuote(uuid4(), -1)
-    assert error.value.code == "malformed_provider_response"
+async def test_complete_provider_contract_is_typed_and_deterministic() -> None:
+    provider = DeterministicFixtureProvider()
+    results = await provider.search_instruments("nova", 5)
+    assert results[0].provider_symbol == "NOVA.XDEV"
+    assert (
+        await provider.get_instrument(results[0].provider_instrument_id)
+    ).source_reference.startswith("fixture:")
+    assert (await provider.get_exchange_reference_data())[0].mic == "XDEV"
+    assert (await provider.get_rate_limit_status()).limit is None
+
+    with pytest.raises(ValidationError):
+        ProviderQuote.model_validate(
+            {
+                **(await provider.get_latest_quote(provider_listing())).model_dump(),
+                "price": "-1",
+            }
+        )
 
 
 def test_candle_shape_and_watchlist_mass_assignment_validation() -> None:

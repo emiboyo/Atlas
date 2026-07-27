@@ -50,7 +50,7 @@ INSTRUMENTS = (
 )
 
 
-async def seed_development_data(session: AsyncSession) -> dict[str, int]:
+async def seed_development_data(session: AsyncSession, *, commit: bool = True) -> dict[str, int]:
     exchange_count = instrument_count = listing_count = 0
     exchanges: dict[str, Exchange] = {}
     for mic, name, acronym, country, timezone, currency in EXCHANGES:
@@ -165,8 +165,9 @@ async def seed_development_data(session: AsyncSession) -> dict[str, int]:
                     )
                 )
             listing_count += 1
-    await session.commit()
-    INGESTION_RESULTS.labels(operation="seed", outcome="success").inc()
+    if commit:
+        await session.commit()
+        INGESTION_RESULTS.labels(operation="seed", outcome="success").inc()
     return {
         "exchanges_created": exchange_count,
         "instruments_created": instrument_count,

@@ -57,3 +57,7 @@ Milestone 3 does not approve a production market-data provider, entitlement, exc
 redistribution right, service-level objective, freshness policy, commercial quota, corporate
 action process, or real-time claim. The deterministic provider is private-development test data.
 Production remains prohibited under the existing governance decisions.
+
+Milestone 3 remediation is implementation evidence only. The independent audit remains FAIL until
+a separate re-audit verifies M3-AUD-001 through M3-AUD-005. Milestone 4 and production promotion
+remain blocked pending that decision.

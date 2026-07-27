@@ -7,6 +7,7 @@ import { atlasApi } from "@/lib/api-client";
 
 type Watchlist = {
   id: string;
+  tenant_id: string;
   name: string;
   description: string | null;
   status: string;
@@ -17,11 +18,18 @@ type Watchlist = {
     notes: string | null;
   }[];
 };
+type Permissions = {
+  can_update_watchlists: boolean;
+  can_delete_watchlists: boolean;
+  can_add_watchlist_items: boolean;
+  can_remove_watchlist_items: boolean;
+};
 
 export function WatchlistDetail({ watchlistId }: { watchlistId: string }) {
   const { getToken } = useAuth();
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [listingId, setListingId] = useState("");
+  const [permissions, setPermissions] = useState<Permissions | null>(null);
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("Loading watchlist…");
 
@@ -29,7 +37,12 @@ export function WatchlistDetail({ watchlistId }: { watchlistId: string }) {
     const token = await getToken();
     if (!token) throw new Error("Authentication is required.");
     const result = await atlasApi<Watchlist>(`/watchlists/${watchlistId}`, token);
+    const effective = await atlasApi<Permissions>(
+      `/watchlists/effective-permissions?tenant_id=${encodeURIComponent(result.tenant_id)}`,
+      token,
+    );
     setWatchlist(result);
+    setPermissions(effective);
     setMessage("");
   }
 
@@ -40,8 +53,13 @@ export function WatchlistDetail({ watchlistId }: { watchlistId: string }) {
         const token = await getToken();
         if (!token) throw new Error("Authentication is required.");
         const result = await atlasApi<Watchlist>(`/watchlists/${watchlistId}`, token);
+        const effective = await atlasApi<Permissions>(
+          `/watchlists/effective-permissions?tenant_id=${encodeURIComponent(result.tenant_id)}`,
+          token,
+        );
         if (active) {
           setWatchlist(result);
+          setPermissions(effective);
           setMessage("");
         }
       } catch (error) {
@@ -123,31 +141,39 @@ export function WatchlistDetail({ watchlistId }: { watchlistId: string }) {
             <article key={item.id} className="rounded-xl border border-white/10 p-4">
               <p className="font-mono text-sm text-cyan-200">{item.listing_id}</p>
               <p className="mt-1 text-sm text-slate-400">{item.notes ?? "No notes."}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  aria-label={`Move listing ${index + 1} up`}
-                  onClick={() => void move(item.id, -1)}
-                  className="rounded-lg border border-white/15 px-3 py-2 text-sm"
-                >
-                  Move up
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Move listing ${index + 1} down`}
-                  onClick={() => void move(item.id, 1)}
-                  className="rounded-lg border border-white/15 px-3 py-2 text-sm"
-                >
-                  Move down
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void remove(item.id)}
-                  className="rounded-lg border border-red-300/30 px-3 py-2 text-sm text-red-200"
-                >
-                  Remove
-                </button>
-              </div>
+              {permissions?.can_update_watchlists || permissions?.can_remove_watchlist_items ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {permissions.can_update_watchlists ? (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`Move listing ${index + 1} up`}
+                        onClick={() => void move(item.id, -1)}
+                        className="rounded-lg border border-white/15 px-3 py-2 text-sm"
+                      >
+                        Move up
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move listing ${index + 1} down`}
+                        onClick={() => void move(item.id, 1)}
+                        className="rounded-lg border border-white/15 px-3 py-2 text-sm"
+                      >
+                        Move down
+                      </button>
+                    </>
+                  ) : null}
+                  {permissions.can_remove_watchlist_items ? (
+                    <button
+                      type="button"
+                      onClick={() => void remove(item.id)}
+                      className="rounded-lg border border-red-300/30 px-3 py-2 text-sm text-red-200"
+                    >
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </article>
           ))}
           {!watchlist.items.length ? (
@@ -157,34 +183,38 @@ export function WatchlistDetail({ watchlistId }: { watchlistId: string }) {
           ) : null}
         </div>
       </section>
-      <form
-        onSubmit={(event) => void add(event)}
-        className="mt-8 max-w-xl rounded-2xl border border-white/10 p-6"
-      >
-        <h2 className="font-display text-xl font-semibold">Add a catalogue listing</h2>
-        <label className="mt-5 block">
-          <span className="text-sm text-slate-300">Listing ID</span>
-          <input
-            className="atlas-input mt-2 w-full"
-            value={listingId}
-            onChange={(event) => setListingId(event.target.value)}
-            placeholder="Use the listing ID from market search"
-            required
-          />
-        </label>
-        <label className="mt-4 block">
-          <span className="text-sm text-slate-300">Notes</span>
-          <textarea
-            className="atlas-input mt-2 min-h-24 w-full"
-            value={notes}
-            maxLength={500}
-            onChange={(event) => setNotes(event.target.value)}
-          />
-        </label>
-        <button className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950">
-          Add listing
-        </button>
-      </form>
+      {permissions?.can_add_watchlist_items ? (
+        <form
+          onSubmit={(event) => void add(event)}
+          className="mt-8 max-w-xl rounded-2xl border border-white/10 p-6"
+        >
+          <h2 className="font-display text-xl font-semibold">Add a catalogue listing</h2>
+          <label className="mt-5 block">
+            <span className="text-sm text-slate-300">Listing ID</span>
+            <input
+              className="atlas-input mt-2 w-full"
+              value={listingId}
+              onChange={(event) => setListingId(event.target.value)}
+              placeholder="Use the listing ID from market search"
+              required
+            />
+          </label>
+          <label className="mt-4 block">
+            <span className="text-sm text-slate-300">Notes</span>
+            <textarea
+              className="atlas-input mt-2 min-h-24 w-full"
+              value={notes}
+              maxLength={500}
+              onChange={(event) => setNotes(event.target.value)}
+            />
+          </label>
+          <button className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950">
+            Add listing
+          </button>
+        </form>
+      ) : (
+        <p className="mt-8 text-sm text-slate-400">This watchlist is read-only.</p>
+      )}
     </div>
   );
 }

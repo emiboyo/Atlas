@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import type { Route } from "next";
 import { atlasApi } from "@/lib/api-client";
+import { MarketDataState } from "@/components/market-data-state";
 
 type Listing = {
   id: string;
@@ -28,6 +29,7 @@ type Quote = {
   provider_timestamp: string;
   received_at: string;
   data_status: string;
+  delay_seconds?: number | null;
   is_stale: boolean;
   source_label: string;
   disclaimer: string;
@@ -73,13 +75,12 @@ export function MarketInstrument({ instrumentId }: { instrumentId: string }) {
         <h1 className="font-display mt-2 text-4xl font-semibold">{instrument.canonical_name}</h1>
         <p className="mt-3 max-w-3xl text-slate-300">{instrument.description}</p>
       </header>
-      <section className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-5">
-        <strong>Simulated development data</strong>
-        <p className="mt-1 text-sm text-amber-100">
-          Deterministic software-test values only. No trade controls, predictions, or
-          recommendations are provided.
-        </p>
-      </section>
+      <MarketDataState
+        status={quote?.data_status ?? "unavailable"}
+        providerTimestamp={quote?.provider_timestamp}
+        delaySeconds={quote?.delay_seconds}
+        message={quote?.disclaimer}
+      />
       {quote ? (
         <section aria-labelledby="quote-title" className="rounded-2xl border border-white/10 p-6">
           <h2 id="quote-title" className="font-display text-xl font-semibold">

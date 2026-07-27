@@ -1,5 +1,9 @@
 # Authorisation Model
 
+Watchlist effective permissions are derived from the active tenant membership on the server and
+returned as bounded booleans for UI rendering. They cannot be supplied or overridden by the
+browser and never replace API-side permission enforcement.
+
 ## Principles
 
 - Authentication proves the external identity; local Atlas state authorises resources.

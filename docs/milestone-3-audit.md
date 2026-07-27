@@ -1,5 +1,9 @@
 # Milestone 3 Independent Audit — Instruments, Watchlists and Read-Only Market Data
 
+> **Post-audit remediation note:** M3-AUD-001 through M3-AUD-005 have remediation evidence recorded
+> in [`milestone-3-remediation-report.md`](milestone-3-remediation-report.md). This preserves the
+> original FAIL conclusion below. A separate independent re-audit is required to change it.
+
 > **FINAL STATUS: FAIL**
 >
 > The implemented private-development paths are stable, tenant isolation passed, all native
