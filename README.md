@@ -1,5 +1,10 @@
 # Atlas AI
 
+Milestone 3 remediation completes the private simulated-provider contract, centralized
+market-data validation, controlled audited ingestion, provider-health caching, and
+permission-aware watchlist UI. This is not production approval; see
+`docs/milestone-3-audit.md` and `docs/milestone-3-remediation-report.md`.
+
 > The Intelligent Investment Operating System.
 
 Atlas AI is a production-oriented foundation for a global investment platform. This repository

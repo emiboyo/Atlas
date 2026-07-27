@@ -1,5 +1,4 @@
 from datetime import UTC, datetime, timedelta
-from time import perf_counter
 from uuid import UUID, uuid4
 
 from fastapi import status
@@ -11,11 +10,10 @@ from apps.api.src.core.errors import ApplicationError
 from apps.api.src.identity.authorization import AuthorisationService, Permission
 from apps.api.src.identity.services import OrganisationService
 from apps.api.src.market.cache import MarketCache
+from apps.api.src.market.execution import ProviderExecutor
 from apps.api.src.market.metrics import (
     CACHE_OPERATIONS,
     MARKET_REQUESTS,
-    PROVIDER_ERRORS,
-    PROVIDER_LATENCY,
     STALE_RESPONSES,
 )
 from apps.api.src.market.providers import (
@@ -24,10 +22,13 @@ from apps.api.src.market.providers import (
     DeterministicFixtureProvider,
     DisabledExternalProvider,
     MarketDataProvider,
+    ProviderListingContext,
 )
+from apps.api.src.market.quality import ProviderDataQualityService
 from apps.api.src.market.repositories import MarketRepository, WatchlistRepository
 from apps.api.src.market.schemas import (
     CandleResult,
+    EffectiveWatchlistPermissions,
     InstrumentDetail,
     InstrumentSearchResult,
     ListingSummary,
@@ -69,6 +70,29 @@ class MarketService:
             DeterministicFixtureProvider()
             if settings.market_data_provider == "simulated"
             else DisabledExternalProvider()
+        )
+        self.executor = ProviderExecutor(
+            timeout_seconds=settings.market_provider_timeout_seconds,
+            retry_count=settings.market_provider_retry_count,
+        )
+        self.quality = ProviderDataQualityService(settings)
+
+    def provider_context(self, listing: InstrumentListing) -> ProviderListingContext:
+        mapping = next(
+            (item for item in listing.provider_mappings if item.provider == self.provider.name),
+            None,
+        )
+        return ProviderListingContext(
+            listing_id=listing.id,
+            provider_symbol=(
+                mapping.provider_symbol
+                if mapping is not None
+                else listing.provider_normalised_symbol or listing.ticker
+            ),
+            provider_venue_code=(
+                mapping.provider_exchange_code if mapping is not None else listing.exchange.mic
+            ),
+            currency=listing.quote_currency,
         )
 
     def listing_summary(self, listing: InstrumentListing) -> ListingSummary:
@@ -180,21 +204,23 @@ class MarketService:
                 CACHE_OPERATIONS.labels(operation="quote", result="hit").inc()
                 return cached
             CACHE_OPERATIONS.labels(operation="quote", result="miss").inc()
-        started = perf_counter()
+        context = self.provider_context(listing)
         try:
-            quote = await self.provider.get_latest_quote(listing_id)
-        except ApplicationError as exc:
-            PROVIDER_ERRORS.labels(provider=self.provider.name, code=exc.code).inc()
-            raise
-        finally:
-            PROVIDER_LATENCY.labels(provider=self.provider.name, operation="quote").observe(
-                perf_counter() - started
+            quote = self.quality.quote(
+                await self.executor.execute(
+                    self.provider.name,
+                    "quote",
+                    lambda: self.provider.get_latest_quote(context),
+                ),
+                context,
             )
-        if quote.price is not None and quote.price < 0:
-            raise ApplicationError(
-                "The provider response failed validation.",
-                code="malformed_provider_response",
-                status_code=status.HTTP_502_BAD_GATEWAY,
+        except ApplicationError:
+            stale = await self.cache.get_stale_model(cache_key, QuoteResult) if self.cache else None
+            if stale is None:
+                raise
+            STALE_RESPONSES.labels(provider=self.provider.name).inc()
+            return stale.model_copy(
+                update={"data_status": MarketDataStatus.STALE, "is_stale": True}
             )
         stale_after = quote.provider_timestamp + timedelta(
             seconds=self.settings.market_quote_cache_ttl_seconds
@@ -226,10 +252,11 @@ class MarketService:
             disclaimer=NON_ADVISORY_DISCLAIMER,
         )
         if self.cache:
-            await self.cache.set_json(
+            await self.cache.set_model_with_stale_fallback(
                 cache_key,
-                result.model_dump(mode="json"),
-                self.settings.market_quote_cache_ttl_seconds,
+                result,
+                fresh_ttl_seconds=self.settings.market_quote_cache_ttl_seconds,
+                stale_ttl_seconds=self.settings.market_quote_stale_fallback_ttl_seconds,
             )
         return result
 
@@ -270,18 +297,18 @@ class MarketService:
                 CACHE_OPERATIONS.labels(operation="candles", result="hit").inc()
                 return cached
             CACHE_OPERATIONS.labels(operation="candles", result="miss").inc()
-        started = perf_counter()
-        try:
-            candles = await self.provider.get_historical_candles(
-                listing_id, interval, start.astimezone(UTC), end.astimezone(UTC)
-            )
-        except ApplicationError as exc:
-            PROVIDER_ERRORS.labels(provider=self.provider.name, code=exc.code).inc()
-            raise
-        finally:
-            PROVIDER_LATENCY.labels(provider=self.provider.name, operation="candles").observe(
-                perf_counter() - started
-            )
+        context = self.provider_context(listing)
+        batch = self.quality.candles(
+            await self.executor.execute(
+                self.provider.name,
+                "candles",
+                lambda: self.provider.get_historical_candles(
+                    context, interval, start.astimezone(UTC), end.astimezone(UTC)
+                ),
+            ),
+            context,
+        )
+        candles = list(batch.candles)
         result = CandleResult(
             listing_id=listing_id,
             interval=interval,
@@ -289,9 +316,9 @@ class MarketService:
             requested_end=end,
             returned_start=candles[0].period_start if candles else None,
             returned_end=candles[-1].period_end if candles else None,
-            provider=self.provider.name,
+            provider=batch.provider,
             currency=listing.quote_currency,
-            data_status=MarketDataStatus.SIMULATED,
+            data_status=batch.data_status,
             candles=candles,
             disclaimer=NON_ADVISORY_DISCLAIMER,
         )
@@ -304,14 +331,39 @@ class MarketService:
         return result
 
     async def status(self) -> MarketStatusResponse:
-        healthy = await self.provider.health_check()
-        return MarketStatusResponse(
+        cache_key = MarketCache.key("health", self.provider.name)
+        if self.cache:
+            cached = await self.cache.get_model(cache_key, MarketStatusResponse)
+            if cached is not None:
+                CACHE_OPERATIONS.labels(operation="health", result="hit").inc()
+                return cached
+            CACHE_OPERATIONS.labels(operation="health", result="miss").inc()
+        try:
+            health = await self.executor.execute(
+                self.provider.name, "health", self.provider.get_health
+            )
+        except ApplicationError:
+            health = None
+        result = MarketStatusResponse(
             provider=self.provider.name,
-            status="available" if healthy else "unavailable",
-            data_status=(MarketDataStatus.SIMULATED if healthy else MarketDataStatus.UNAVAILABLE),
-            source_label=SIMULATED_SOURCE if healthy else "External provider disabled",
+            status="available" if health and health.available else "unavailable",
+            data_status=(
+                MarketDataStatus.SIMULATED
+                if health and health.available
+                else MarketDataStatus.UNAVAILABLE
+            ),
+            source_label=(
+                SIMULATED_SOURCE if health and health.available else "External provider unavailable"
+            ),
             disclaimer=NON_ADVISORY_DISCLAIMER,
         )
+        if self.cache:
+            await self.cache.set_json(
+                cache_key,
+                result.model_dump(mode="json"),
+                self.settings.market_health_cache_ttl_seconds,
+            )
+        return result
 
 
 class WatchlistService:
@@ -332,6 +384,26 @@ class WatchlistService:
             session, tenant_id, actor.id
         )
         self.authorisation.require_permission(membership.role, permission)
+
+    async def effective_permissions(
+        self, session: AsyncSession, actor: User, tenant_id: UUID
+    ) -> EffectiveWatchlistPermissions:
+        _tenant, membership = await self.organisations.require_membership(
+            session, tenant_id, actor.id
+        )
+
+        def can(permission: Permission) -> bool:
+            return self.authorisation.can(membership.role, permission)
+
+        return EffectiveWatchlistPermissions(
+            tenant_id=tenant_id,
+            can_read_watchlists=can(Permission.WATCHLIST_READ),
+            can_create_watchlists=can(Permission.WATCHLIST_CREATE),
+            can_update_watchlists=can(Permission.WATCHLIST_UPDATE),
+            can_delete_watchlists=can(Permission.WATCHLIST_DELETE),
+            can_add_watchlist_items=can(Permission.WATCHLIST_ITEM_ADD),
+            can_remove_watchlist_items=can(Permission.WATCHLIST_ITEM_REMOVE),
+        )
 
     async def require(
         self,

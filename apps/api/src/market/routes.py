@@ -12,6 +12,7 @@ from apps.api.src.market.cache import MarketCache
 from apps.api.src.market.repositories import WatchlistRepository
 from apps.api.src.market.schemas import (
     CandleResult,
+    EffectiveWatchlistPermissions,
     ExchangeResponse,
     InstrumentDetail,
     ListingSummary,
@@ -164,6 +165,19 @@ async def list_watchlists(
         session, tenant_id, offset=(page - 1) * page_size, limit=page_size
     )
     return [watchlist_response(item) for item in rows]
+
+
+@router.get(
+    "/watchlists/effective-permissions",
+    response_model=EffectiveWatchlistPermissions,
+    tags=["Watchlists"],
+)
+async def get_effective_watchlist_permissions(
+    tenant_id: UUID,
+    session: DatabaseSession,
+    user: ActiveUser,
+) -> EffectiveWatchlistPermissions:
+    return await WatchlistService(get_settings()).effective_permissions(session, user, tenant_id)
 
 
 @router.post(

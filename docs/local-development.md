@@ -1,5 +1,17 @@
 # Local development
 
+Market-data mutations are private CLI commands with an operation UUID for audit idempotency:
+
+```text
+python -m apps.api.src.market.cli seed-development-data --operation-id <uuid>
+python -m apps.api.src.market.cli sync-reference-data --operation-id <uuid>
+python -m apps.api.src.market.cli reconcile-listings --provider-symbol NOVA --operation-id <uuid>
+python -m apps.api.src.market.cli refresh-quote --listing-id <uuid> --operation-id <uuid>
+python -m apps.api.src.market.cli refresh-candles --listing-id <uuid> --start <iso> --end <iso> --operation-id <uuid>
+```
+
+These commands refuse production and use only the server-configured provider.
+
 ## Milestone 2 identity configuration
 
 Copy the environment examples and use development-only Clerk values. The API requires issuer and

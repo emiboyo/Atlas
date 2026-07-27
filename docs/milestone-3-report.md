@@ -2,8 +2,12 @@
 
 > **CURRENT STATUS — CONDITIONAL PASS**
 >
-> The Milestone 3 instruments, watchlists, and read-only market-data foundation satisfies its
-> technical acceptance gates for private development. The conditional status is inherited from
+> **Historical implementation report — superseded by the independent audit and remediation.**
+> The original report stated that the technical acceptance gates were satisfied. The independent
+> audit disproved that statement and recorded a FAIL. See
+> [`milestone-3-audit.md`](milestone-3-audit.md) and
+> [`milestone-3-remediation-report.md`](milestone-3-remediation-report.md). The original status was
+> also subject to
 > the time-bounded development-only security decisions in
 > [`security-risk-exceptions.md`](security-risk-exceptions.md) and
 > [ADR 0006](adr/0006-milestone-1-security-risk-decision.md).
@@ -403,12 +407,12 @@ public or production deployment. Existing exceptions must be reviewed by 2026-08
 
 ## 31. Final status
 
-**CONDITIONAL PASS — PRIVATE DEVELOPMENT ONLY**
+**SUPERSEDED — THE INDEPENDENT AUDIT RESULT IS FAIL**
 
-All Milestone 3 technical acceptance gates were validated. Conditional status is required solely
-because the existing, time-bounded development-tooling and base-image security exceptions remain
-open. Their scope has not been broadened. Production deployment, public access, live trading,
-real-money investing, custody, and customer-fund handling remain prohibited.
+The statement previously placed here—that all technical acceptance gates were validated—was not
+supported by executable evidence. Remediation does not change the audit decision; only a separate
+independent re-audit may do so. Production deployment, public access, live trading, real-money
+investing, custody, and customer-fund handling remain prohibited.
 
 ## Appendix A — Failed commands and resolution
 

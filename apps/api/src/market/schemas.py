@@ -136,6 +136,16 @@ class MarketStatusResponse(BaseModel):
     disclaimer: str
 
 
+class EffectiveWatchlistPermissions(BaseModel):
+    tenant_id: UUID
+    can_read_watchlists: bool
+    can_create_watchlists: bool
+    can_update_watchlists: bool
+    can_delete_watchlists: bool
+    can_add_watchlist_items: bool
+    can_remove_watchlist_items: bool
+
+
 class WatchlistCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -24,6 +24,10 @@ class MarketCache:
         digest = sha256(encoded_parts).hexdigest()
         return f"atlas:market:v1:{namespace}:{digest}"
 
+    @staticmethod
+    def stale_key(key: str) -> str:
+        return f"{key}:stale"
+
     async def get_json(self, key: str) -> object | None:
         try:
             value = await self.redis.get(key)
@@ -45,6 +49,21 @@ class MarketCache:
             return model.model_validate(cached)
         except ValidationError:
             return None
+
+    async def set_model_with_stale_fallback(
+        self,
+        key: str,
+        value: BaseModel,
+        *,
+        fresh_ttl_seconds: int,
+        stale_ttl_seconds: int,
+    ) -> None:
+        payload = value.model_dump(mode="json")
+        await self.set_json(key, payload, fresh_ttl_seconds)
+        await self.set_json(self.stale_key(key), payload, stale_ttl_seconds)
+
+    async def get_stale_model(self, key: str, model: type[ModelT]) -> ModelT | None:
+        return await self.get_model(self.stale_key(key), model)
 
     async def remember(
         self,

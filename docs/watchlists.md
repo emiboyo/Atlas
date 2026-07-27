@@ -1,5 +1,9 @@
 # Tenant watchlists
 
+`GET /api/v1/watchlists/effective-permissions` returns tenant-specific booleans derived from the
+active server-side membership. The frontend uses them to hide unavailable create, update, delete,
+add, remove and reorder controls. API authorisation remains mandatory and authoritative.
+
 Watchlists belong to an Atlas tenant and use UUID identity. Items reference listing UUIDs, never
 symbols. A listing appears once; positions are unique, non-negative, and deterministic.
 

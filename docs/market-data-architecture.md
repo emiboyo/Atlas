@@ -1,5 +1,13 @@
 # Market-data architecture
 
+The remediated provider boundary includes search, instrument detail, venue reference data, quote,
+candles, health and rate-limit state. A bounded executor and central quality service sit between
+adapters and services. Controlled development ingestion provides deterministic quote/candle
+observations and audited operations. Provider health is cached briefly in Redis using
+provider-scoped collision-resistant keys; malformed cache data and Redis outages degrade safely.
+Quotes use separate fresh and stale-shadow keys with bounded TTLs. The shadow is consulted only
+after provider failure and is always returned as `stale`, never as live data.
+
 Milestone 3 is a provider-neutral, read-only catalogue and observation system. Every market route
 requires the Milestone 2 active-user dependency. Reference data is shared across authenticated
 users; watchlists require an active tenant membership and central permission.

@@ -1,5 +1,10 @@
 # Security baseline
 
+Milestone 3 provider selection is server-controlled. Browser input cannot select a provider,
+mapping, role or permission. Provider results are immutable, validated centrally, executed under
+bounded timeouts/retries, and never logged as raw payloads. Development administration uses
+non-public CLI commands and bounded audit metadata.
+
 - Identity is delegated to Clerk; API authorization must validate issuer, audience, signature,
   expiry, and subject for every protected route.
 - Stripe webhook signatures must be verified before event processing.

@@ -1,5 +1,12 @@
 # Testing and quality gates
 
+Milestone 3 remediation tests cover the complete provider contract, safe errors, bounded
+timeout/retry behavior, timestamp/currency/symbol/venue validation, provenance, staleness,
+health-cache behavior, controlled ingestion, audited commands, watchlist permissions, search
+abuse inputs, and explicit frontend data states.
+The health-cache tests use an injected clock to prove expiry. Quote tests prove both bounded
+stale-shadow fallback during provider failure and rejection after the shadow expires.
+
 Identity tests cover local JWT verification, registered-claim failures, unknown keys, disabled
 Clerk fail-closed behavior, webhook signature/timestamp validation, request mass-assignment,
 profile validation, user lifecycle rejection, recent-authentication deactivation, permission

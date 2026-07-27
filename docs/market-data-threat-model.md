@@ -1,5 +1,10 @@
 # Market-data threat model
 
+Remediation controls provider impersonation and poisoning through server-owned provider selection,
+stored symbol/venue mappings, currency equality, timezone-aware future tolerance, mandatory source
+references, immutable typed results, bounded execution, collision-resistant cache keys and typed
+cache validation. Rate-limit, authentication and invalid-response failures are never retried.
+
 | Threat                          | Control                                                            |
 | ------------------------------- | ------------------------------------------------------------------ |
 | Ticker collision                | Separate instrument/listing UUIDs and venue-symbol uniqueness      |

@@ -16,6 +16,9 @@ type Watchlist = {
   status: string;
   items: { id: string }[];
 };
+type Permissions = {
+  can_create_watchlists: boolean;
+};
 
 export function WatchlistBrowser() {
   const { getToken } = useAuth();
@@ -23,16 +26,21 @@ export function WatchlistBrowser() {
   const [tenantId, setTenantId] = useState("");
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [name, setName] = useState("");
+  const [permissions, setPermissions] = useState<Permissions | null>(null);
   const [message, setMessage] = useState("Loading workspaces…");
 
   async function loadWatchlists(selectedTenant: string) {
     const token = await getToken();
     if (!token) throw new Error("Authentication is required.");
-    const result = await atlasApi<Watchlist[]>(
-      `/watchlists?tenant_id=${encodeURIComponent(selectedTenant)}`,
-      token,
-    );
+    const [result, effectivePermissions] = await Promise.all([
+      atlasApi<Watchlist[]>(`/watchlists?tenant_id=${encodeURIComponent(selectedTenant)}`, token),
+      atlasApi<Permissions>(
+        `/watchlists/effective-permissions?tenant_id=${encodeURIComponent(selectedTenant)}`,
+        token,
+      ),
+    ]);
     setWatchlists(result);
+    setPermissions(effectivePermissions);
     setMessage(result.length ? "" : "No watchlists in this workspace.");
   }
 
@@ -114,26 +122,32 @@ export function WatchlistBrowser() {
           ))}
         </div>
       </section>
-      <form
-        onSubmit={(event) => void create(event)}
-        className="h-fit rounded-2xl border border-white/10 p-6"
-      >
-        <h2 className="font-display text-xl font-semibold">Create watchlist</h2>
-        <label className="mt-5 block">
-          <span className="text-sm text-slate-300">Watchlist name</span>
-          <input
-            className="atlas-input mt-2 w-full"
-            value={name}
-            minLength={1}
-            maxLength={120}
-            onChange={(event) => setName(event.target.value)}
-            required
-          />
-        </label>
-        <button className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950">
-          Create
-        </button>
-      </form>
+      {permissions?.can_create_watchlists ? (
+        <form
+          onSubmit={(event) => void create(event)}
+          className="h-fit rounded-2xl border border-white/10 p-6"
+        >
+          <h2 className="font-display text-xl font-semibold">Create watchlist</h2>
+          <label className="mt-5 block">
+            <span className="text-sm text-slate-300">Watchlist name</span>
+            <input
+              className="atlas-input mt-2 w-full"
+              value={name}
+              minLength={1}
+              maxLength={120}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
+          </label>
+          <button className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950">
+            Create
+          </button>
+        </form>
+      ) : (
+        <p className="h-fit rounded-2xl border border-white/10 p-6 text-sm text-slate-400">
+          This workspace is read-only for your account.
+        </p>
+      )}
     </div>
   );
 }
