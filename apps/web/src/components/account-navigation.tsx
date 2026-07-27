@@ -10,6 +10,8 @@ const links: { href: Route; label: string }[] = [
   { href: "/app/onboarding", label: "Onboarding" },
   { href: "/app/profile", label: "Profile" },
   { href: "/app/organisations", label: "Workspaces" },
+  { href: "/app/markets", label: "Markets" },
+  { href: "/app/watchlists", label: "Watchlists" },
 ];
 
 export function AccountNavigation() {

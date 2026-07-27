@@ -35,3 +35,9 @@
 - Document provider redistribution and retention rights for every market-data field.
 
 No Restricted customer-identification fields are introduced by the current migration.
+
+Market reference data, fictional fixtures, venue codes, and safe provider labels are Internal.
+Watchlist names, descriptions, notes, tenant IDs, and user references are Confidential tenant
+data. Provider credentials are Restricted and must never enter observations, logs, API
+responses, browser bundles, or Redis. Quote and candle provenance is integrity-sensitive even
+when simulated.

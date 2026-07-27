@@ -17,7 +17,16 @@ from packages.database.atlas_database.models.identity import (
     User,
     UserProfile,
 )
-from packages.database.atlas_database.models.instruments import Instrument, InstrumentListing
+from packages.database.atlas_database.models.instruments import (
+    Exchange,
+    HistoricalCandle,
+    Instrument,
+    InstrumentListing,
+    ProviderSymbolMapping,
+    QuoteObservation,
+    Watchlist,
+    WatchlistItem,
+)
 from packages.database.atlas_database.models.ledger import (
     LedgerAccount,
     LedgerEntry,
@@ -33,6 +42,8 @@ __all__ = [
     "BillingCustomer",
     "BillingSubscription",
     "ClerkWebhookEvent",
+    "Exchange",
+    "HistoricalCandle",
     "IdentityAuditEvent",
     "Instrument",
     "InstrumentListing",
@@ -44,8 +55,12 @@ __all__ = [
     "PaymentLedgerLink",
     "Portfolio",
     "PositionSnapshot",
+    "ProviderSymbolMapping",
+    "QuoteObservation",
     "StripeWebhookEvent",
     "Tenant",
     "User",
     "UserProfile",
+    "Watchlist",
+    "WatchlistItem",
 ]

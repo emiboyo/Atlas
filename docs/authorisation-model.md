@@ -45,3 +45,11 @@ mutations.
 - `409`: lifecycle, uniqueness, final-owner, or state-transition conflict.
 
 Every API response carries a request ID through the shared middleware and stable error envelope.
+
+## Watchlist permissions
+
+`watchlist:read`, `watchlist:create`, `watchlist:update`, `watchlist:delete`,
+`watchlist:item:add`, and `watchlist:item:remove` use the same central matrix. Owners and admins
+receive all six. Members receive read, create, update, add, and remove. Viewers receive read only.
+Browser-selected tenant and watchlist IDs never establish authority; PostgreSQL membership is
+resolved for every operation.

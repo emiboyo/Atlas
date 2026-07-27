@@ -47,6 +47,16 @@ class Settings(BaseSettings):
     stripe_webhook_secret: SecretStr = SecretStr("")
     stripe_webhook_max_bytes: int = Field(default=1_048_576, ge=1024, le=10_485_760)
     otel_exporter_otlp_endpoint: str = ""
+    market_data_provider: Literal["simulated", "disabled"] = "simulated"
+    market_search_cache_ttl_seconds: int = Field(default=900, ge=10, le=86400)
+    market_detail_cache_ttl_seconds: int = Field(default=1800, ge=10, le=86400)
+    market_quote_cache_ttl_seconds: int = Field(default=30, ge=1, le=3600)
+    market_candle_cache_ttl_seconds: int = Field(default=3600, ge=60, le=86400)
+    market_provider_timeout_seconds: int = Field(default=5, ge=1, le=30)
+    market_max_search_results: int = Field(default=50, ge=1, le=100)
+    market_max_candle_days: int = Field(default=366, ge=1, le=3660)
+    watchlist_max_per_tenant: int = Field(default=25, ge=1, le=500)
+    watchlist_max_items: int = Field(default=100, ge=1, le=1000)
 
     @model_validator(mode="after")
     def validate_production_safety(self) -> "Settings":
