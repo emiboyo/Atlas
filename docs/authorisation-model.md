@@ -57,3 +57,20 @@ Every API response carries a request ID through the shared middleware and stable
 receive all six. Members receive read, create, update, add, and remove. Viewers receive read only.
 Browser-selected tenant and watchlist IDs never establish authority; PostgreSQL membership is
 resolved for every operation.
+
+## Simulated portfolio permissions
+
+| Permission                     | Owner | Admin | Member | Viewer |
+| ------------------------------ | :---: | :---: | :----: | :----: |
+| `portfolio:read`               |  Yes  |  Yes  |  Yes   |  Yes   |
+| `portfolio:create`             |  Yes  |  Yes  |  Yes   |   No   |
+| `portfolio:update`             |  Yes  |  Yes  |  Yes   |   No   |
+| `portfolio:archive`            |  Yes  |  Yes  |   No   |   No   |
+| `portfolio:transaction:create` |  Yes  |  Yes  |  Yes   |   No   |
+| `portfolio:transaction:read`   |  Yes  |  Yes  |  Yes   |  Yes   |
+| `portfolio:analytics:read`     |  Yes  |  Yes  |  Yes   |  Yes   |
+| `portfolio:audit:read`         |  Yes  |  Yes  |   No   |   No   |
+
+The API resolves the portfolio and active membership server-side. A foreign or guessed portfolio
+is concealed as `404`; a known same-tenant operation without permission returns `403`. Frontend
+booleans are presentation hints and cannot expand authority.

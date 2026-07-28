@@ -26,6 +26,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm audit:governed:prod
+      - run: pnpm audit:governed
 
   api:
     runs-on: ubuntu-latest
@@ -60,9 +62,10 @@ jobs:
       - run: python -m ruff check apps packages/database
       - run: python -m mypy apps/api/src packages/database/atlas_database
       - run: python -m pip check
+      - run: python -m pip_audit -r apps/api/requirements.txt
       - run: alembic -c packages/database/alembic.ini upgrade head
       - run: ATLAS_TEST_DATABASE_URL="$ATLAS_DATABASE_URL" pytest --cov=apps.api.src --cov=packages.database.atlas_database --cov-report=term-missing --cov-fail-under=80
-      - run: alembic -c packages/database/alembic.ini downgrade 20260727_0003
+      - run: alembic -c packages/database/alembic.ini downgrade 20260727_0005
       - run: alembic -c packages/database/alembic.ini upgrade head
       - run: alembic -c packages/database/alembic.ini check
 

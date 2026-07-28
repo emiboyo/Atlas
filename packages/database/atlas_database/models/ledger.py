@@ -48,6 +48,7 @@ class LedgerAccount(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             native_enum=False,
             length=16,
             create_constraint=True,
+            values_callable=lambda enum: [member.value for member in enum],
         ),
         nullable=False,
     )
@@ -80,6 +81,7 @@ class LedgerTransaction(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
             native_enum=False,
             length=16,
             create_constraint=True,
+            values_callable=lambda enum: [member.value for member in enum],
         ),
         default=LedgerTransactionStatus.DRAFT,
         nullable=False,

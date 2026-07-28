@@ -66,3 +66,13 @@ deterministically ordered transactions, append-only history, safe reversals, pro
 freshness, database constraints, and tenant isolation. Simulation must remain unmistakable.
 Production, public access, live providers, real money, payments, brokerage, execution, custody,
 advice, customer funds, and Milestone 5 remain prohibited.
+
+Milestone 4 uses the existing active-user and membership chain. Same-tenant permission failures
+return `403`; foreign portfolio, transaction, and snapshot identifiers are concealed. Financial
+mutations require idempotency, execute under PostgreSQL row locks, and atomically commit
+transaction, journal, position, and audit changes. Append-only triggers and reversal uniqueness
+backstop service logic. See `portfolio-threat-model.md`.
+
+CI runs a fail-closed governed pnpm audit verifier. It permits only
+GHSA-mh99-v99m-4gvg/CVE-2026-14257 at the recorded workspace ESLint/minimatch paths before 2026-10-28 and
+fails for a new path, advisory, severity change, or expiry. Python audit remains unexcepted.

@@ -3,8 +3,9 @@
 ## Purpose
 
 This model establishes durable identity, ownership, instrument, portfolio, position, and
-accounting boundaries. It does not implement order execution, valuation, performance,
-recommendations, suitability, or other investment behavior.
+accounting boundaries. Milestone 4 adds simulated valuation and descriptive historical
+analytics. It does not implement order execution, recommendations, suitability, prediction, or
+real investment behavior.
 
 ## Aggregate boundaries
 
@@ -78,3 +79,20 @@ as defence in depth after the connection and migration roles are separated.
 - Suitability, appropriateness, KYC, AML, sanctions, and tax residency workflows
 
 These require approved provider, legal, accounting, and regulatory rules before implementation.
+
+## Milestone 4 simulated extension
+
+The original `Portfolio` and signed-ledger aggregates are extended rather than duplicated.
+`PortfolioAccount` maps currency-specific simulated roles onto existing ledger accounts.
+`PortfolioTransaction` is ordered, idempotent, immutable paper activity.
+`PortfolioPosition` is a weighted-average query projection; immutable transaction deltas remain
+rebuild evidence.
+
+Virtual cash and holdings are fictional internal values, not deposits, customer money, legal
+assets/liabilities, custody, brokerage, or execution records. Monetary journals balance per
+currency. Non-monetary splits do not fabricate cash entries. Corrections use linked opposite
+transactions.
+
+Milestone 4 implements simulated valuation snapshots and descriptive history under ADRs
+0010–0013. Tax cost basis, real accounts/orders, settlement, custody, and provenanced FX
+conversion remain deferred.

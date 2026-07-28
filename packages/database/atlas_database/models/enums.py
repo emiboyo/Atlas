@@ -163,6 +163,47 @@ class LedgerTransactionStatus(StrEnum):
     REVERSED = "reversed"
 
 
+class PortfolioStatus(StrEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class PortfolioAccountRole(StrEnum):
+    VIRTUAL_CASH = "virtual_cash"
+    SIMULATED_INVESTMENT_COST = "simulated_investment_cost"
+    SIMULATED_CAPITAL = "simulated_capital"
+    SIMULATED_DIVIDEND_INCOME = "simulated_dividend_income"
+    SIMULATED_FEE_EXPENSE = "simulated_fee_expense"
+    SIMULATED_REALISED_GAIN = "simulated_realised_gain"
+    SIMULATED_REALISED_LOSS = "simulated_realised_loss"
+
+
+class PortfolioTransactionType(StrEnum):
+    VIRTUAL_DEPOSIT = "virtual_deposit"
+    VIRTUAL_WITHDRAWAL = "virtual_withdrawal"
+    SIMULATED_BUY = "simulated_buy"
+    SIMULATED_SELL = "simulated_sell"
+    SIMULATED_DIVIDEND = "simulated_dividend"
+    SIMULATED_FEE = "simulated_fee"
+    SIMULATED_SPLIT_ADJUSTMENT = "simulated_split_adjustment"
+    REVERSAL = "reversal"
+
+
+class PortfolioTransactionStatus(StrEnum):
+    POSTED = "posted"
+    REVERSED = "reversed"
+
+
+class PositionStatus(StrEnum):
+    OPEN = "open"
+    CLOSED = "closed"
+
+
+class ValuationCompleteness(StrEnum):
+    COMPLETE = "complete"
+    INCOMPLETE = "incomplete"
+
+
 class SubscriptionStatus(StrEnum):
     INCOMPLETE = "incomplete"
     INCOMPLETE_EXPIRED = "incomplete_expired"

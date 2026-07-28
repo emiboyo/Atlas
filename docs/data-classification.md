@@ -55,3 +55,11 @@ retention, tenant-aware access, and safe metadata. Provider timestamps, transact
 valuation timestamps, receipt timestamps, market-data status, source provenance, and currency
 must be retained distinctly. No real bank, card, payment, tax, passport, brokerage, KYC, custody,
 or money-movement data is permitted by Milestone 4 governance.
+
+Names, descriptions, transaction reasons, and audit metadata are bounded. They must not contain
+credentials, payment data, unrestricted notes, or real customer-fund information. Logs and
+metric labels exclude portfolio names, amounts, quantities, user/tenant IDs, holdings, and
+complete snapshots. Safe request IDs and bounded operation/result codes are permitted.
+
+Public APIs provide no update/delete operation for transactions, ledger entries, snapshots,
+valuation lines, or portfolio audit events; PostgreSQL append-only triggers backstop the policy.

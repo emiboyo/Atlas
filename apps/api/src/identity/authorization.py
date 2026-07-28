@@ -24,6 +24,14 @@ class Permission(StrEnum):
     WATCHLIST_DELETE = "watchlist:delete"
     WATCHLIST_ITEM_ADD = "watchlist:item:add"
     WATCHLIST_ITEM_REMOVE = "watchlist:item:remove"
+    PORTFOLIO_READ = "portfolio:read"
+    PORTFOLIO_CREATE = "portfolio:create"
+    PORTFOLIO_UPDATE = "portfolio:update"
+    PORTFOLIO_ARCHIVE = "portfolio:archive"
+    PORTFOLIO_TRANSACTION_CREATE = "portfolio:transaction:create"
+    PORTFOLIO_TRANSACTION_READ = "portfolio:transaction:read"
+    PORTFOLIO_ANALYTICS_READ = "portfolio:analytics:read"
+    PORTFOLIO_AUDIT_READ = "portfolio:audit:read"
 
 
 ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
@@ -45,6 +53,14 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.WATCHLIST_DELETE,
             Permission.WATCHLIST_ITEM_ADD,
             Permission.WATCHLIST_ITEM_REMOVE,
+            Permission.PORTFOLIO_READ,
+            Permission.PORTFOLIO_CREATE,
+            Permission.PORTFOLIO_UPDATE,
+            Permission.PORTFOLIO_ARCHIVE,
+            Permission.PORTFOLIO_TRANSACTION_CREATE,
+            Permission.PORTFOLIO_TRANSACTION_READ,
+            Permission.PORTFOLIO_ANALYTICS_READ,
+            Permission.PORTFOLIO_AUDIT_READ,
         }
     ),
     MembershipRole.MEMBER: frozenset(
@@ -58,6 +74,12 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.WATCHLIST_UPDATE,
             Permission.WATCHLIST_ITEM_ADD,
             Permission.WATCHLIST_ITEM_REMOVE,
+            Permission.PORTFOLIO_READ,
+            Permission.PORTFOLIO_CREATE,
+            Permission.PORTFOLIO_UPDATE,
+            Permission.PORTFOLIO_TRANSACTION_CREATE,
+            Permission.PORTFOLIO_TRANSACTION_READ,
+            Permission.PORTFOLIO_ANALYTICS_READ,
         }
     ),
     MembershipRole.VIEWER: frozenset(
@@ -66,6 +88,9 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.PROFILE_READ_SELF,
             Permission.PROFILE_UPDATE_SELF,
             Permission.WATCHLIST_READ,
+            Permission.PORTFOLIO_READ,
+            Permission.PORTFOLIO_TRANSACTION_READ,
+            Permission.PORTFOLIO_ANALYTICS_READ,
         }
     ),
 }

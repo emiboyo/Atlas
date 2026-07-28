@@ -26,6 +26,8 @@
     "api:lint": "ruff check apps packages/database",
     "api:format": "ruff format apps packages/database",
     "api:typecheck": "mypy apps/api/src packages/database/atlas_database",
+    "audit:governed": "node scripts/verify-governed-node-audit.mjs",
+    "audit:governed:prod": "node scripts/verify-governed-node-audit.mjs --prod",
     "compose:up": "docker compose up --build",
     "compose:down": "docker compose down",
     "clean": "turbo run clean"

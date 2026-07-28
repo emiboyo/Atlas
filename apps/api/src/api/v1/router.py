@@ -5,11 +5,13 @@ from apps.api.src.api.v1.webhooks import router as webhooks_router
 from apps.api.src.core.security import CurrentPrincipal
 from apps.api.src.identity.routes import router as identity_router
 from apps.api.src.market.routes import router as market_router
+from apps.api.src.portfolio.routes import router as portfolio_router
 
 router = APIRouter()
 router.include_router(webhooks_router)
 router.include_router(identity_router)
 router.include_router(market_router)
+router.include_router(portfolio_router)
 
 
 @router.get("/", summary="API v1 information")
