@@ -76,3 +76,27 @@ backstop service logic. See `portfolio-threat-model.md`.
 CI runs a fail-closed governed pnpm audit verifier. It permits only
 GHSA-mh99-v99m-4gvg/CVE-2026-14257 at the recorded workspace ESLint/minimatch paths before 2026-10-28 and
 fails for a new path, advisory, severity change, or expiry. Python audit remains unexcepted.
+
+## Milestone 5 research and AI boundary
+
+Milestone 5 is authorised for private historical simulation and explainable research only under
+[`milestone-5-governance.md`](milestone-5-governance.md) and
+[ADR 0014](adr/0014-milestone-5-private-development-authorisation.md). Strategy and backtest
+permissions must be central, server-side, tenant-scoped, object-aware, and fail-closed. Browser
+roles, tenants, ownership, providers, model versions, and result status are never authorities.
+
+Backtests must prevent look-ahead bias and material leakage, retain immutable inputs and
+provenance, use deterministic ordering, and expose missing/stale/unavailable data and every
+execution-price, fee, slippage, sizing, and benchmark assumption. Completed results and strategy
+versions are append-only or explicitly superseded.
+
+AI output is optional, research-only, non-advisory, and non-authoritative. Deterministic mocks and
+local deterministic explainers are permitted; production AI credentials, external transmission
+of tenant financial/research information, external training on customer data, autonomous agents,
+execution-capable tools, and AI-triggered transactions are prohibited. Safe disablement and
+provider-unavailable behavior are required.
+
+The two existing security advisories remain unresolved and are extended only to bounded
+Milestone 5 private development without changing owner Adebayo Olaegbe, review 2026-08-27, or
+expiry 2026-10-27. Production, public access, live trading, real money, advice, autonomous
+financial action, and Milestone 6 remain prohibited.

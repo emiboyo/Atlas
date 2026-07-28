@@ -96,3 +96,23 @@ transactions.
 Milestone 4 implements simulated valuation snapshots and descriptive history under ADRs
 0010–0013. Tax cost basis, real accounts/orders, settlement, custody, and provenanced FX
 conversion remain deferred.
+
+## Milestone 5 historical research boundary
+
+Milestone 5 may add a separate tenant-owned research aggregate only after the governance decision
+and ADR 0014 are committed. A research strategy is a versioned hypothesis, not an order,
+portfolio mandate, recommendation, or executable instruction. A backtest run binds an immutable
+strategy version to a historical data set, explicit period, simulated starting capital,
+position-sizing policy, benchmark, fee/slippage/execution assumptions, software version, and
+reproducibility metadata.
+
+Historical simulated events and performance results are append-only research evidence. They must
+not mutate Milestone 4 portfolio accounting, become authoritative ledger entries, or create
+orders. Persisted money and quantities remain fixed-precision; currencies and provenance remain
+explicit; FX cannot be inferred. Strategy supersession creates a new version rather than
+rewriting history.
+
+AI explanations are optional derived research artifacts with model, prompt/template, data, and
+software provenance. They cannot establish accounting state, permission, suitability, advice, or
+execution. The exact schema and migration design remain implementation work and are not created
+by this governance decision.

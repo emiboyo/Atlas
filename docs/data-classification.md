@@ -63,3 +63,24 @@ complete snapshots. Safe request IDs and bounded operation/result codes are perm
 
 Public APIs provide no update/delete operation for transactions, ledger entries, snapshots,
 valuation lines, or portfolio audit events; PostgreSQL append-only triggers backstop the policy.
+
+## Milestone 5 research data
+
+| Data                                                                  | Classification          | Handling                                                                    |
+| --------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------- |
+| Approved product/governance documentation                             | Public after approval   | Integrity and release review                                                |
+| Bounded system strategy templates                                     | Internal                | Versioning and controlled modification                                      |
+| Tenant strategy definitions, versions, parameters, and tags           | Confidential            | Tenant isolation, encryption, least privilege, append-only history          |
+| Backtest inputs, runs, simulated trades, results, and comparisons     | Confidential            | Immutable provenance, tenant controls, auditability                         |
+| Simulated portfolio references                                        | Confidential            | Existing portfolio authorization and purpose limitation                     |
+| Model prompts/templates and explanations                              | Confidential by default | Bounded retention; exclude credentials and prohibited financial information |
+| Strategy/backtest/model audit records                                 | Confidential            | Append-only retention and tenant-aware access                               |
+| AI/provider/API credentials                                           | Restricted              | Secret store only; production credentials prohibited in Milestone 5         |
+| Real bank, card, brokerage, KYC, tax, identity, or customer-fund data | Prohibited              | Must not be collected or processed                                          |
+
+Tenant strategies, parameters, results, explanations, prompts, and portfolio references are not
+public content and cannot be transmitted to a public AI provider without a separate approved
+data-processing decision. External model training or fine-tuning on Atlas customer or tenant
+financial data is prohibited. Logs and metric labels must exclude complete strategy definitions,
+unrestricted prompts/model responses, identifiers, portfolio contents, tokens, credentials, and
+raw provider payloads.
