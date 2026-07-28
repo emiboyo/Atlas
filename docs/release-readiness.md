@@ -86,5 +86,25 @@ analytics. It does not satisfy a production checklist item or weaken an existing
 - [ ] Governed dependency findings remain owned, reviewed, unexpired, and development-only.
 - [ ] An independent Milestone 4 audit reviews the implementation and report.
 
-Completion still does not authorise production, public access, real money, trading, orders,
-custody, advice, customer funds, live providers, deployment, or Milestone 5.
+Milestone 4 completion by itself does not authorise production, public access, real money,
+trading, orders, custody, advice, customer funds, live providers, deployment, or Milestone 5.
+Milestone 5 authority comes only from the separate governance decision below.
+
+## Milestone 5 governance status
+
+- Milestone 4 audit: **Conditional Pass — Private Development Only**.
+- Milestone 5 private development: authorised only after
+  [`milestone-5-governance.md`](milestone-5-governance.md) and
+  [ADR 0014](adr/0014-milestone-5-private-development-authorisation.md) are committed.
+- Scope: explainable strategy research, historical backtesting, and simulation using stored Atlas
+  data or deterministic fixtures.
+- Production/public/live-trading/real-money/advisory/autonomous-action readiness: prohibited.
+- Risk owner: Adebayo Olaegbe.
+- Review: 2026-08-27.
+- Expiry: 2026-10-27.
+- Milestone 6: prohibited.
+
+Milestone 5 completion will not satisfy a production checklist item. A future implementation must
+be independently audited for look-ahead bias, leakage, reproducibility, provenance, model risk,
+tenant isolation, fixed precision, append-only results, non-advisory language, and the absence of
+execution capability.

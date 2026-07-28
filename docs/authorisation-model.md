@@ -74,3 +74,29 @@ resolved for every operation.
 The API resolves the portfolio and active membership server-side. A foreign or guessed portfolio
 is concealed as `404`; a known same-tenant operation without permission returns `403`. Frontend
 booleans are presentation hints and cannot expand authority.
+
+## Milestone 5 research permissions
+
+Candidate permissions are:
+
+- `strategy:read`
+- `strategy:create`
+- `strategy:update`
+- `strategy:archive`
+- `strategy:version:create`
+- `backtest:create`
+- `backtest:read`
+- `backtest:compare`
+- `backtest:explain`
+- `backtest:audit:read`
+
+Exact names and the role matrix may be refined during implementation, but they must remain
+central, server-side, tenant-scoped, object-aware, and fail-closed. Active Atlas users, active
+tenants, and active memberships are mandatory. Foreign or guessed strategies, versions, runs,
+results, explanations, and audit objects must be concealed.
+
+Browser-supplied roles, permissions, tenants, strategy ownership, providers, model/explainer
+versions, and result status are presentation data only and cannot grant access or establish
+provenance. AI output cannot expand a permission, choose an authority, submit an action, or alter
+authoritative financial state. Milestone 5 is private historical research only; production,
+advice, execution, autonomous action, and Milestone 6 are prohibited.

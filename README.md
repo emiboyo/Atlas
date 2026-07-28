@@ -1,10 +1,10 @@
 # Atlas AI
 
-Milestone 3 has a Conditional Pass under private-development controls. Milestone 4 private
-development is authorised only for simulated portfolio accounting and read-only descriptive
-analytics under `docs/milestone-4-governance.md` and ADR 0009. Production, public access, live
-providers, real money, trading, custody, advice, customer funds, and Milestone 5 remain
-prohibited.
+Milestone 4 received a Conditional Pass under private-development controls. Milestone 5 private
+development is authorised only after the committed governance record for explainable strategy
+research, historical backtesting, and simulation. Production, public access, live providers,
+real money, trading, brokerage, execution, custody, advice, autonomous financial action,
+customer funds, and Milestone 6 remain prohibited.
 
 > The Intelligent Investment Operating System.
 
@@ -356,3 +356,28 @@ history/posting/reversal, holdings, explicit valuation snapshots, descriptive
 analytics/history/allocation/volatility/drawdown/benchmark, and append-only audit history.
 Mutations require active membership, central permission, and idempotency. No arbitrary-ledger,
 broker, order, payment, or execution endpoint exists.
+
+## Milestone 5 governance boundary
+
+[`docs/milestone-5-governance.md`](docs/milestone-5-governance.md) and
+[`ADR 0014`](docs/adr/0014-milestone-5-private-development-authorisation.md) authorize bounded
+private development of tenant-isolated research strategies, reproducible historical backtests,
+descriptive simulated results, and optional deterministic/local explanations.
+
+Milestone 5 must use stored Atlas historical data or approved deterministic fixtures, immutable
+strategy/run inputs, append-only results, fixed-precision values, explicit data/fee/slippage/
+execution assumptions, server-controlled provenance, and controls against look-ahead bias,
+leakage, overfitting, and misleading performance claims. Every relevant screen must state:
+
+> Historical simulation only — not investment advice and not a prediction of future performance.
+
+AI explanations are optional research artifacts and never authority for identity, permissions,
+accounting, financial state, transactions, or execution. Production AI credentials, public
+provider transmission of tenant financial information, external training on customer data,
+autonomous agents, current recommendations, real orders, live trading, and paper-to-live
+conversion are prohibited.
+
+Risk owner Adebayo Olaegbe, review 2026-08-27, and expiry 2026-10-27 remain unchanged. The two
+existing development exceptions remain unresolved and extend only to this bounded private scope.
+Work may begin only after the governance record and ADR are committed. Milestone 6 remains
+unauthorised.

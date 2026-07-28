@@ -158,3 +158,17 @@ exceptions. It does not change their risk owner, review date, expiry date, compe
 revocation conditions, unresolved status, or production prohibition. It creates no new
 vulnerability exception and grants no authority for public access, real money, customer funds,
 live providers, trading, or Milestone 5.
+
+## Milestone 5 scope-extension control
+
+The new dated decision in
+[ADR 0014](adr/0014-milestone-5-private-development-authorisation.md) extends both existing
+development-only exceptions solely to bounded Milestone 5 explainable strategy research,
+historical backtesting, and simulation.
+
+Both vulnerabilities remain unresolved. Risk owner Adebayo Olaegbe, review date 2026-08-27,
+expiry date 2026-10-27, compensating controls, immediate revocation conditions, and production
+prohibitions are unchanged. The extension authorises no public access, live provider, production
+AI credential, real money, broker, order, execution, custody, advice, autonomous financial
+action, customer funds, or Milestone 6. Scope expires automatically without a new recorded
+decision.
