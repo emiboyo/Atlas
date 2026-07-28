@@ -35,6 +35,12 @@ from packages.database.atlas_database.models.ledger import (
 from packages.database.atlas_database.models.portfolios import (
     InvestmentAccount,
     Portfolio,
+    PortfolioAccount,
+    PortfolioAuditEvent,
+    PortfolioPosition,
+    PortfolioTransaction,
+    PortfolioValuationLine,
+    PortfolioValuationSnapshot,
     PositionSnapshot,
 )
 
@@ -54,6 +60,12 @@ __all__ = [
     "Membership",
     "PaymentLedgerLink",
     "Portfolio",
+    "PortfolioAccount",
+    "PortfolioAuditEvent",
+    "PortfolioPosition",
+    "PortfolioTransaction",
+    "PortfolioValuationLine",
+    "PortfolioValuationSnapshot",
     "PositionSnapshot",
     "ProviderSymbolMapping",
     "QuoteObservation",

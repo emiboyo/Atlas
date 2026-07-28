@@ -96,3 +96,23 @@ duplicate venue symbols, simulated quotes/candles, cross-tenant denial, viewer d
 uniqueness, and audit paths. Unit tests cover malformed candles, provider unavailability,
 unsupported intervals, bounded schemas, permissions, cache hit/miss, key separation, and Redis
 failure degradation. No test contacts a market-data vendor.
+
+## Milestone 4 portfolio testing
+
+Portfolio tests cover the central role matrix, forbidden extra fields, Decimal precision,
+virtual cash, weighted-average buy/partial sell, dividend, split, fee accounting, balanced
+journals, replay/conflict, reversal, insufficient cash/quantity, archived mutation, rollback,
+cross-tenant concealment, multi-currency incompleteness, and deterministic sequence.
+
+Concurrency tests use independent PostgreSQL sessions for identical idempotent requests,
+withdrawals against one cash balance, and sells against one position. They prove one duplicate
+result and no overspend/oversell. SQLite is not proof for these invariants and is not used.
+
+Web tests assert simulated warnings, portfolio/list/form states, viewer read-only behavior,
+explicit paper-accounting language, stale/missing/unavailable/unconverted states, accessible
+tables/labels/chart alternatives, and absence of execution or recommendation language.
+
+```powershell
+$env:ATLAS_TEST_DATABASE_URL="postgresql+asyncpg://<test-user>:<password>@127.0.0.1:<port>/<database>"
+python -m pytest --cov=apps.api.src --cov=packages.database.atlas_database --cov-report=term-missing --cov-fail-under=80
+```

@@ -23,6 +23,17 @@ Without Clerk configuration, public routes remain available while protected web 
 fails closed. There is no local authentication bypass. Automated tests use locally generated
 signing keys and synthetic webhook signatures and make no Clerk network calls.
 
+## Simulated portfolio development
+
+With development Clerk configured, use `/app/portfolios`. Every screen states “Simulated
+portfolio — no real money or orders.” Record virtual cash before a simulated buy. Listing IDs
+come from the authenticated market catalogue; identity and currency are resolved server-side.
+
+Financial mutations require `Idempotency-Key`. Retain and replay the same key after an uncertain
+network result; changed content with the same key returns `409`. No local flow contacts a broker,
+bank, payment system, execution venue, or live provider. Portfolio tables require migration
+`20260728_0006`.
+
 ## Prerequisites
 
 - Git

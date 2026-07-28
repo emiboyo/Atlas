@@ -61,9 +61,9 @@ Production remains prohibited under the existing governance decisions.
 ## Current milestone governance status
 
 - Milestone 3 technical status: **Conditional Pass — Private Development Controls Only**.
-- Milestone 4 private development: authorised only after
+- Milestone 4 private development: authorised under committed
   [`milestone-4-governance.md`](milestone-4-governance.md) and
-  [ADR 0009](adr/0009-milestone-4-private-development-authorisation.md) are committed.
+  [ADR 0009](adr/0009-milestone-4-private-development-authorisation.md).
 - Production readiness: prohibited.
 - Public readiness: prohibited.
 - Live-provider readiness: prohibited.
@@ -72,3 +72,19 @@ Production remains prohibited under the existing governance decisions.
 
 Milestone 4 authority is limited to simulated portfolio accounting and read-only descriptive
 analytics. It does not satisfy a production checklist item or weaken an existing exception.
+
+## Milestone 4 technical evidence required
+
+- [ ] Revision `20260728_0006` upgrades from and downgrades to `20260727_0005`.
+- [ ] Fresh PostgreSQL migration and Alembic drift check pass.
+- [ ] Monetary journals balance per currency and posted history is append-only.
+- [ ] Independent-session duplicate, overspend, oversell, and reversal tests pass.
+- [ ] Cross-tenant objects are concealed and permissions match the central matrix.
+- [ ] Stale, missing, unavailable, simulated, and unconverted values remain explicit.
+- [ ] Python coverage is at least 80%; frontend tests and production build pass.
+- [ ] Compose services are healthy with non-root/read-only/no-new-privileges controls.
+- [ ] Governed dependency findings remain owned, reviewed, unexpired, and development-only.
+- [ ] An independent Milestone 4 audit reviews the implementation and report.
+
+Completion still does not authorise production, public access, real money, trading, orders,
+custody, advice, customer funds, live providers, deployment, or Milestone 5.

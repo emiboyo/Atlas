@@ -10,8 +10,8 @@ prohibited.
 
 Atlas AI is a production-oriented foundation for a global investment platform. This repository
 contains independently deployable web and API applications, shared packages, local infrastructure,
-cloud foundations, tests, and delivery automation. It intentionally contains no investment
-business logic.
+cloud foundations, tests, and delivery automation. Its financial behavior is limited to governed
+simulated portfolio accounting and descriptive read-only analytics.
 
 ## Architecture
 
@@ -59,6 +59,13 @@ The persistence contract is documented in the
 [data classification](docs/data-classification.md).
 Stripe integration boundaries are described in
 [payments architecture](docs/payments-architecture.md).
+
+Milestone 4 adds tenant-isolated simulated accounting on the existing ledger:
+currency-specific virtual cash, immutable paper transactions, weighted-average long-only
+positions, compensating reversals, explicit valuation provenance/completeness, and descriptive
+non-advisory analytics. See [portfolio architecture](docs/portfolio-architecture.md),
+[accounting rules](docs/simulated-portfolio-accounting.md), and
+[portfolio threat model](docs/portfolio-threat-model.md).
 
 ## Prerequisites
 
@@ -138,6 +145,8 @@ docker compose up --build
 | Liveness           | http://localhost:8000/health/live  |
 | Readiness          | http://localhost:8000/health/ready |
 | Prometheus metrics | http://localhost:8000/metrics      |
+
+Protected simulated portfolio UI: `http://localhost:3000/app/portfolios`.
 
 Stop services with `docker compose down`. Add `--volumes` only when you intentionally want to
 delete local PostgreSQL and Redis data.
@@ -339,3 +348,11 @@ payments, banking, brokerage, orders, execution, custody, money movement, person
 recommendations, financial advice, customer funds, or Milestone 5. See
 [`docs/milestone-4-governance.md`](docs/milestone-4-governance.md) and
 [`ADR 0009`](docs/adr/0009-milestone-4-private-development-authorisation.md).
+
+### Simulated portfolio API
+
+Routes under `/api/v1/portfolios` provide lifecycle/effective permissions, immutable transaction
+history/posting/reversal, holdings, explicit valuation snapshots, descriptive
+analytics/history/allocation/volatility/drawdown/benchmark, and append-only audit history.
+Mutations require active membership, central permission, and idempotency. No arbitrary-ledger,
+broker, order, payment, or execution endpoint exists.
