@@ -58,6 +58,17 @@ redistribution right, service-level objective, freshness policy, commercial quot
 action process, or real-time claim. The deterministic provider is private-development test data.
 Production remains prohibited under the existing governance decisions.
 
-Milestone 3 remediation is implementation evidence only. The independent audit remains FAIL until
-a separate re-audit verifies M3-AUD-001 through M3-AUD-005. Milestone 4 and production promotion
-remain blocked pending that decision.
+## Current milestone governance status
+
+- Milestone 3 technical status: **Conditional Pass — Private Development Controls Only**.
+- Milestone 4 private development: authorised only after
+  [`milestone-4-governance.md`](milestone-4-governance.md) and
+  [ADR 0009](adr/0009-milestone-4-private-development-authorisation.md) are committed.
+- Production readiness: prohibited.
+- Public readiness: prohibited.
+- Live-provider readiness: prohibited.
+- Real-money readiness: prohibited.
+- Milestone 5: not authorised.
+
+Milestone 4 authority is limited to simulated portfolio accounting and read-only descriptive
+analytics. It does not satisfy a production checklist item or weaken an existing exception.

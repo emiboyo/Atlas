@@ -52,3 +52,17 @@ and roles are never authorities. Search is bounded and parameterised; candle ran
 watchlist sizes are capped. Provider credentials remain server-side. Simulated/stale status and
 provenance cannot be promoted to live by browser input or caching. See
 `docs/market-data-threat-model.md`.
+
+## Milestone 4 simulated-portfolio boundary
+
+Milestone 4 is authorised for private simulated development only under
+[`milestone-4-governance.md`](milestone-4-governance.md) and
+[ADR 0009](adr/0009-milestone-4-private-development-authorisation.md). Portfolio permissions must
+be evaluated centrally and server-side; browser-supplied tenant, role, permission, ownership,
+provider, transaction-status, or simulation values are not authorities.
+
+Financial values require fixed-precision persistence, explicit currencies, idempotent and
+deterministically ordered transactions, append-only history, safe reversals, provenance,
+freshness, database constraints, and tenant isolation. Simulation must remain unmistakable.
+Production, public access, live providers, real money, payments, brokerage, execution, custody,
+advice, customer funds, and Milestone 5 remain prohibited.
