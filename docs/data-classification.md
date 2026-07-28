@@ -41,3 +41,17 @@ Watchlist names, descriptions, notes, tenant IDs, and user references are Confid
 data. Provider credentials are Restricted and must never enter observations, logs, API
 responses, browser bundles, or Redis. Quote and candle provenance is integrity-sensitive even
 when simulated.
+
+## Milestone 4 simulated portfolio data
+
+Simulated portfolios, virtual balances, holdings, paper transactions, valuation snapshots, and
+user-entered portfolio notes are Confidential tenant application data. Notes must be bounded and
+must not contain real bank, card, payment, tax, passport, brokerage, credential, or customer-fund
+data. Simulated balances and transactions must never be represented as customer assets,
+liabilities, deposits, withdrawals, or executed orders.
+
+Portfolio audit events are security and financial-integrity records requiring append-only
+retention, tenant-aware access, and safe metadata. Provider timestamps, transaction timestamps,
+valuation timestamps, receipt timestamps, market-data status, source provenance, and currency
+must be retained distinctly. No real bank, card, payment, tax, passport, brokerage, KYC, custody,
+or money-movement data is permitted by Milestone 4 governance.

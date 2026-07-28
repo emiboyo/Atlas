@@ -35,6 +35,8 @@ Technical classification:
 - Automated testing
 - Continuous integration linting
 - Milestone 2 development work
+- Bounded Milestone 4 private development as defined by
+  [ADR 0009](adr/0009-milestone-4-private-development-authorisation.md)
 
 **Prohibited scope:**
 
@@ -43,6 +45,7 @@ Technical classification:
 - Live trading
 - Real-money investing
 - Custody or movement of customer funds
+- Any activity outside the authorised simulated-accounting and read-only-analytics boundary
 - Processing untrusted user-controlled glob or brace patterns through the affected tooling
 
 **Decision rationale:**
@@ -103,6 +106,8 @@ Technical classification:
 
 - Local development
 - Milestone 2 development work
+- Bounded Milestone 4 private development as defined by
+  [ADR 0009](adr/0009-milestone-4-private-development-authorisation.md)
 - Internal Docker Compose testing
 
 **Prohibited scope:**
@@ -111,6 +116,8 @@ Technical classification:
 - Public customer access
 - Live trading
 - Real-money investing
+- Real deposits, withdrawals, payments, brokerage, execution, or customer-fund handling
+- Any activity outside the authorised simulated-accounting and read-only-analytics boundary
 - Executing Perl inside the API container
 - Adding application dependencies or scripts that invoke Perl
 
@@ -142,3 +149,12 @@ production use of the affected image.
 - Atlas is prepared for public or production deployment.
 
 **Approval status:** APPROVED TEMPORARILY
+
+## Milestone 4 scope-extension control
+
+The bounded scope extension recorded in
+[ADR 0009](adr/0009-milestone-4-private-development-authorisation.md) applies to both existing
+exceptions. It does not change their risk owner, review date, expiry date, compensating controls,
+revocation conditions, unresolved status, or production prohibition. It creates no new
+vulnerability exception and grants no authority for public access, real money, customer funds,
+live providers, trading, or Milestone 5.

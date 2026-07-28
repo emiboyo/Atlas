@@ -1,9 +1,10 @@
 # Atlas AI
 
-Milestone 3 remediation completes the private simulated-provider contract, centralized
-market-data validation, controlled audited ingestion, provider-health caching, and
-permission-aware watchlist UI. This is not production approval; see
-`docs/milestone-3-audit.md` and `docs/milestone-3-remediation-report.md`.
+Milestone 3 has a Conditional Pass under private-development controls. Milestone 4 private
+development is authorised only for simulated portfolio accounting and read-only descriptive
+analytics under `docs/milestone-4-governance.md` and ADR 0009. Production, public access, live
+providers, real money, trading, custody, advice, customer funds, and Milestone 5 remain
+prohibited.
 
 > The Intelligent Investment Operating System.
 
@@ -324,3 +325,17 @@ python -m apps.api.src.market.cli seed-development-data
 ```
 
 See `docs/market-data-architecture.md`, `docs/instrument-model.md`, and `docs/watchlists.md`.
+
+## Milestone 4 governance boundary
+
+After the Milestone 4 governance decision is committed, private development may cover
+tenant-isolated paper portfolios, virtual cash, simulated holdings/transactions, simulated
+valuation, append-only auditability, and descriptive read-only analytics. Every financial value
+and action must remain explicitly simulated, fixed-precision, idempotent, reversible through
+append-only corrections, and separated from real financial connectivity.
+
+This authority does not include production deployment, public users, live market providers,
+payments, banking, brokerage, orders, execution, custody, money movement, personalised
+recommendations, financial advice, customer funds, or Milestone 5. See
+[`docs/milestone-4-governance.md`](docs/milestone-4-governance.md) and
+[`ADR 0009`](docs/adr/0009-milestone-4-private-development-authorisation.md).
