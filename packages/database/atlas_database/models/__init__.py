@@ -43,8 +43,23 @@ from packages.database.atlas_database.models.portfolios import (
     PortfolioValuationSnapshot,
     PositionSnapshot,
 )
+from packages.database.atlas_database.models.research import (
+    BacktestEquityPoint,
+    BacktestEvent,
+    BacktestExplanation,
+    BacktestResult,
+    BacktestRun,
+    ResearchAuditEvent,
+    ResearchStrategy,
+    ResearchStrategyVersion,
+)
 
 __all__ = [
+    "BacktestEquityPoint",
+    "BacktestEvent",
+    "BacktestExplanation",
+    "BacktestResult",
+    "BacktestRun",
     "BillingCustomer",
     "BillingSubscription",
     "ClerkWebhookEvent",
@@ -69,6 +84,9 @@ __all__ = [
     "PositionSnapshot",
     "ProviderSymbolMapping",
     "QuoteObservation",
+    "ResearchAuditEvent",
+    "ResearchStrategy",
+    "ResearchStrategyVersion",
     "StripeWebhookEvent",
     "Tenant",
     "User",

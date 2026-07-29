@@ -100,3 +100,9 @@ versions, and result status are presentation data only and cannot grant access o
 provenance. AI output cannot expand a permission, choose an authority, submit an action, or alter
 authoritative financial state. Milestone 5 is private historical research only; production,
 advice, execution, autonomous action, and Milestone 6 are prohibited.
+
+The implemented role matrix grants research read and neutral comparison to every active member.
+Owners and administrators receive all research permissions. Members may create and update
+strategies, create immutable versions and runs, and request local explanations, but cannot archive
+or read research audits. Viewers are read-only. Effective-permission responses are server-derived
+UI guidance; every API operation repeats the authoritative membership and object check.

@@ -32,6 +32,16 @@ class Permission(StrEnum):
     PORTFOLIO_TRANSACTION_READ = "portfolio:transaction:read"
     PORTFOLIO_ANALYTICS_READ = "portfolio:analytics:read"
     PORTFOLIO_AUDIT_READ = "portfolio:audit:read"
+    STRATEGY_READ = "strategy:read"
+    STRATEGY_CREATE = "strategy:create"
+    STRATEGY_UPDATE = "strategy:update"
+    STRATEGY_ARCHIVE = "strategy:archive"
+    STRATEGY_VERSION_CREATE = "strategy:version:create"
+    BACKTEST_CREATE = "backtest:create"
+    BACKTEST_READ = "backtest:read"
+    BACKTEST_COMPARE = "backtest:compare"
+    BACKTEST_EXPLAIN = "backtest:explain"
+    BACKTEST_AUDIT_READ = "backtest:audit:read"
 
 
 ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
@@ -61,6 +71,16 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.PORTFOLIO_TRANSACTION_READ,
             Permission.PORTFOLIO_ANALYTICS_READ,
             Permission.PORTFOLIO_AUDIT_READ,
+            Permission.STRATEGY_READ,
+            Permission.STRATEGY_CREATE,
+            Permission.STRATEGY_UPDATE,
+            Permission.STRATEGY_ARCHIVE,
+            Permission.STRATEGY_VERSION_CREATE,
+            Permission.BACKTEST_CREATE,
+            Permission.BACKTEST_READ,
+            Permission.BACKTEST_COMPARE,
+            Permission.BACKTEST_EXPLAIN,
+            Permission.BACKTEST_AUDIT_READ,
         }
     ),
     MembershipRole.MEMBER: frozenset(
@@ -80,6 +100,14 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.PORTFOLIO_TRANSACTION_CREATE,
             Permission.PORTFOLIO_TRANSACTION_READ,
             Permission.PORTFOLIO_ANALYTICS_READ,
+            Permission.STRATEGY_READ,
+            Permission.STRATEGY_CREATE,
+            Permission.STRATEGY_UPDATE,
+            Permission.STRATEGY_VERSION_CREATE,
+            Permission.BACKTEST_CREATE,
+            Permission.BACKTEST_READ,
+            Permission.BACKTEST_COMPARE,
+            Permission.BACKTEST_EXPLAIN,
         }
     ),
     MembershipRole.VIEWER: frozenset(
@@ -91,6 +119,9 @@ ROLE_PERMISSIONS: dict[MembershipRole, frozenset[Permission]] = {
             Permission.PORTFOLIO_READ,
             Permission.PORTFOLIO_TRANSACTION_READ,
             Permission.PORTFOLIO_ANALYTICS_READ,
+            Permission.STRATEGY_READ,
+            Permission.BACKTEST_READ,
+            Permission.BACKTEST_COMPARE,
         }
     ),
 }

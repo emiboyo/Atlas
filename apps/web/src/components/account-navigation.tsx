@@ -12,7 +12,8 @@ const links: { href: Route; label: string }[] = [
   { href: "/app/organisations", label: "Workspaces" },
   { href: "/app/markets", label: "Markets" },
   { href: "/app/watchlists", label: "Watchlists" },
-  { href: "/app/portfolios" as Route, label: "Portfolios" },
+  { href: "/app/portfolios", label: "Portfolios" },
+  { href: "/app/research", label: "Research" },
 ];
 
 export function AccountNavigation() {
