@@ -392,6 +392,14 @@ class ResearchService:
             operation_id=key,
         )
         candles = await self.repo.candles(session, listing_id, data.start_date, data.end_date)
+        unavailable = sum(item.data_status == MarketDataStatus.UNAVAILABLE for item in candles)
+        if unavailable:
+            await session.rollback()
+            raise error(
+                "market_data_unavailable",
+                "Unavailable historical observations cannot be simulated.",
+                422,
+            )
         rule = cast(list[dict[str, object]], version.configuration["rules"])[0]
         try:
             simulation = DeterministicBacktestEngine().run(
@@ -414,6 +422,12 @@ class ResearchService:
         for sequence, item in enumerate(simulation.events, 1):
             decision = candles[item.decision_index]
             executed = candles[item.execution_index]
+            simulated_at = (
+                executed.period_start
+                if data.execution_policy == "next_open"
+                and item.execution_index > item.decision_index
+                else executed.period_end
+            )
             session.add(
                 BacktestEvent(
                     tenant_id=run.tenant_id,
@@ -422,7 +436,7 @@ class ResearchService:
                     listing_id=listing_id,
                     event_type=BacktestEventType(item.event_type),
                     decision_at=decision.period_end,
-                    simulated_at=executed.period_start,
+                    simulated_at=simulated_at,
                     price=item.price,
                     quantity=item.quantity,
                     gross_value=item.gross,
@@ -462,6 +476,16 @@ class ResearchService:
                 last = benchmark_candles[-1].adjusted_close or benchmark_candles[-1].close
                 if first > 0:
                     benchmark_return = ((last - first) / first) * 100
+        result_checksum = canonical_fingerprint(
+            {
+                "engine_result_checksum": simulation.result_checksum,
+                "benchmark_return": benchmark_return,
+                "missing_count": 0,
+                "stale_count": stale,
+                "unavailable_count": 0,
+                "excluded_count": 0,
+            }
+        )
         result = BacktestResult(
             tenant_id=run.tenant_id,
             run_id=run.id,
@@ -482,7 +506,7 @@ class ResearchService:
             completeness=(
                 ResearchCompleteness.COMPLETE if not stale else ResearchCompleteness.INCOMPLETE
             ),
-            result_checksum=simulation.result_checksum,
+            result_checksum=result_checksum,
         )
         session.add(result)
         run.status = BacktestRunStatus.COMPLETED

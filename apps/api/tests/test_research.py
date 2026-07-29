@@ -12,7 +12,13 @@ from apps.api.src.research.engine import (
     rolling_volatility,
     simple_moving_average,
 )
-from apps.api.src.research.schemas import BacktestCreate, ResearchRule, StrategyCreate
+from apps.api.src.research.schemas import (
+    BacktestCreate,
+    ExplanationCreate,
+    ResearchRule,
+    StrategyCreate,
+    VersionCreate,
+)
 from packages.database.atlas_database.models.enums import (
     CandleInterval,
     MarketDataStatus,
@@ -105,6 +111,79 @@ def test_strict_research_schemas_and_bounds() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("schema", "payload"),
+    [
+        (
+            StrategyCreate,
+            {
+                "tenant_id": str(uuid4()),
+                "name": "Protected",
+                "research_purpose": "Mass-assignment evidence",
+                "created_by_user_id": str(uuid4()),
+            },
+        ),
+        (
+            VersionCreate,
+            {
+                "version_label": "Protected",
+                "base_currency": "GBP",
+                "listing_id": str(uuid4()),
+                "version_number": 99,
+                "configuration_fingerprint": "client-controlled",
+                "rules": [
+                    {
+                        "id": "cross",
+                        "rule_type": "sma_crossover",
+                        "short_window": 2,
+                        "long_window": 3,
+                    }
+                ],
+            },
+        ),
+        (
+            BacktestCreate,
+            {
+                "strategy_id": str(uuid4()),
+                "strategy_version_id": str(uuid4()),
+                "start_date": "2026-01-01",
+                "end_date": "2026-01-10",
+                "starting_capital": "1000",
+                "fee_model": "zero_fee",
+                "slippage_model": "zero_slippage",
+                "execution_policy": "next_open",
+                "sizing_policy": "fixed_quantity",
+                "sizing_value": "1",
+                "missing_data_policy": "fail_run",
+                "status": "completed",
+                "result_checksum": "client-controlled",
+            },
+        ),
+        (
+            ExplanationCreate,
+            {
+                "explanation_type": "run_summary",
+                "status": "completed",
+                "output_fingerprint": "client-controlled",
+            },
+        ),
+        (
+            ResearchRule,
+            {
+                "id": "cross",
+                "rule_type": "python",
+                "short_window": 2,
+                "long_window": 3,
+                "source": "__import__('os').system('whoami')",
+            },
+        ),
+    ],
+)
+def test_protected_and_executable_fields_fail_closed(schema, payload) -> None:
+    with pytest.raises(ValidationError):
+        schema.model_validate(payload)
+
+
 def engine_arguments() -> dict[str, object]:
     return {
         "starting_capital": Decimal("1000"),
@@ -173,6 +252,7 @@ def test_target_derived_fields_cannot_influence_rule_features() -> None:
     altered = engine.run(altered_targets, **engine_arguments())  # type: ignore[arg-type]
     assert altered.events == baseline.events
     assert [item.total for item in altered.equity] == [item.total for item in baseline.equity]
+    assert altered.data_fingerprint != baseline.data_fingerprint
 
 
 def test_missing_observation_is_not_filled_from_future_data() -> None:

@@ -2,14 +2,19 @@ import asyncio
 import os
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from typing import cast
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from apps.api.src.core.errors import ApplicationError
+from apps.api.src.research.engine import (
+    DeterministicBacktestEngine,
+    canonical_fingerprint,
+)
 from apps.api.src.research.schemas import (
     BacktestCreate,
     ExplanationCreate,
@@ -137,6 +142,7 @@ async def test_complete_research_workflow_is_reproducible_and_isolated() -> None
         events = await ResearchService().events(session, owner, run.id)
         result = await ResearchService().result(session, owner, run.id)
         assert events
+        assert all(item.simulated_at >= item.decision_at for item in events)
         assert result.result_checksum
         assert result.starting_value == Decimal("1000")
         explanation = await ResearchService().explain(
@@ -532,3 +538,204 @@ async def _version_configuration(factory, strategy_id):
         )
         assert version is not None
         return version.configuration
+
+
+@pytest.mark.parametrize("execution_policy", ["same_close", "next_close"])
+async def test_close_execution_timestamps_match_the_consumed_close(
+    execution_policy: str,
+) -> None:
+    engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    owner, _strategy, _version, run_data = await create_concurrency_subject(
+        factory, label=f"Timestamp {execution_policy}"
+    )
+    run_data = run_data.model_copy(update={"execution_policy": execution_policy})
+    async with factory() as session:
+        run = await ResearchService().create_run(
+            session,
+            owner,
+            run_data,
+            f"timestamp-{execution_policy}-{uuid4()}",
+            "timestamp-audit",
+        )
+        events = await ResearchService().events(session, owner, run.id)
+        assert events
+        assert all(item.simulated_at >= item.decision_at for item in events)
+        source_ids = {source_id for item in events for source_id in item.source_observation_ids}
+        observations = (
+            await session.scalars(
+                select(HistoricalCandle).where(HistoricalCandle.id.in_(source_ids))
+            )
+        ).all()
+        by_id = {str(item.id): item for item in observations}
+        for item in events:
+            executed = by_id[item.source_observation_ids[-1]]
+            assert item.simulated_at == executed.period_end
+    await engine.dispose()
+
+
+async def test_unavailable_observation_fails_atomically_without_false_run() -> None:
+    engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    owner, _viewer, _outsider, tenant, _other, listing_id = await setup_context(factory)
+    async with factory() as session:
+        fixture_start = datetime(2026, 4, 1, tzinfo=UTC)
+        await session.execute(
+            delete(HistoricalCandle).where(
+                HistoricalCandle.listing_id == listing_id,
+                HistoricalCandle.provider == "atlas_simulated",
+                HistoricalCandle.interval == CandleInterval.ONE_DAY,
+                HistoricalCandle.period_start >= fixture_start,
+                HistoricalCandle.period_start < fixture_start + timedelta(days=5),
+            )
+        )
+        for index, value in enumerate(("10", "9", "8", "9", "10")):
+            start = fixture_start + timedelta(days=index)
+            session.add(
+                HistoricalCandle(
+                    id=uuid4(),
+                    listing_id=listing_id,
+                    provider="atlas_simulated",
+                    interval=CandleInterval.ONE_DAY,
+                    period_start=start,
+                    period_end=start + timedelta(days=1),
+                    open=Decimal(value),
+                    high=Decimal(value) + 1,
+                    low=Decimal(value) - 1,
+                    close=Decimal(value),
+                    adjusted_close=Decimal(value),
+                    volume=100,
+                    currency="GBP",
+                    data_status=(
+                        MarketDataStatus.UNAVAILABLE if index == 3 else MarketDataStatus.SIMULATED
+                    ),
+                    received_at=datetime(2026, 5, 1, tzinfo=UTC),
+                )
+            )
+        await session.commit()
+        strategy = await ResearchService().create_strategy(
+            session,
+            owner,
+            StrategyCreate(
+                tenant_id=tenant.id,
+                name=f"Unavailable data {uuid4().hex[:8]}",
+                research_purpose="Fail-closed unavailable-data evidence",
+            ),
+            "unavailable-strategy",
+        )
+        version = await ResearchService().create_version(
+            session,
+            owner,
+            strategy.id,
+            VersionCreate(
+                version_label="Unavailable test",
+                base_currency="GBP",
+                listing_id=listing_id,
+                rules=[
+                    ResearchRule(
+                        id="cross",
+                        rule_type="sma_crossover",
+                        short_window=2,
+                        long_window=3,
+                    )
+                ],
+            ),
+            f"unavailable-version-{uuid4()}",
+            "unavailable-version",
+        )
+    run_data = BacktestCreate(
+        strategy_id=strategy.id,
+        strategy_version_id=version.id,
+        start_date=date(2026, 4, 1),
+        end_date=date(2026, 4, 6),
+        starting_capital=Decimal("1000"),
+        fee_model="zero_fee",
+        slippage_model="zero_slippage",
+        execution_policy="next_open",
+        sizing_policy="fixed_quantity",
+        sizing_value=Decimal("1"),
+        missing_data_policy="fail_run",
+    )
+    key = f"unavailable-run-{uuid4()}"
+    async with factory() as session:
+        with pytest.raises(ApplicationError) as unavailable:
+            await ResearchService().create_run(session, owner, run_data, key, "unavailable-run")
+        assert unavailable.value.code == "market_data_unavailable"
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(BacktestRun)
+                .where(
+                    BacktestRun.strategy_id == strategy.id,
+                    BacktestRun.idempotency_key == key,
+                )
+            )
+            == 0
+        )
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(ResearchAuditEvent)
+                .where(ResearchAuditEvent.operation_id == key)
+            )
+            == 0
+        )
+    await engine.dispose()
+
+
+async def test_completed_run_reconstructs_from_immutable_inputs() -> None:
+    engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    owner, _strategy, version, run_data = await create_concurrency_subject(
+        factory, label="Independent reconstruction"
+    )
+    async with factory() as session:
+        run = await ResearchService().create_run(
+            session,
+            owner,
+            run_data,
+            f"reconstruction-{uuid4()}",
+            "reconstruction-audit",
+        )
+        stored_events = await ResearchService().events(session, owner, run.id)
+        stored_equity = await ResearchService().equity(session, owner, run.id)
+        stored_result = await ResearchService().result(session, owner, run.id)
+        observations = await ResearchService().repo.candles(
+            session, run.listing_id, run.start_date, run.end_date
+        )
+    rule = cast(list[dict[str, object]], version.configuration["rules"])[0]
+    replay = DeterministicBacktestEngine().run(
+        observations,
+        starting_capital=run.starting_capital,
+        rule_id=cast(str, rule["id"]),
+        short_window=cast(int, rule["short_window"]),
+        long_window=cast(int, rule["long_window"]),
+        execution_policy=run.execution_policy,
+        fee_model=run.fee_model,
+        fee_value=run.fee_value,
+        slippage_bps=run.slippage_bps,
+        sizing_policy=run.sizing_policy,
+        sizing_value=run.sizing_value,
+    )
+    assert [item.event_type.value for item in stored_events] == [
+        item.event_type for item in replay.events
+    ]
+    assert [item.sequence for item in stored_events] == list(range(1, len(replay.events) + 1))
+    assert [item.total_equity for item in stored_equity] == [item.total for item in replay.equity]
+    assert stored_result.ending_value == replay.ending_value
+    assert stored_result.simulated_pnl == replay.pnl
+    assert stored_result.historical_return == replay.historical_return
+    assert stored_result.maximum_drawdown == replay.maximum_drawdown
+    assert stored_result.volatility == replay.volatility
+    assert stored_result.turnover == replay.turnover
+    assert stored_result.result_checksum == canonical_fingerprint(
+        {
+            "engine_result_checksum": replay.result_checksum,
+            "benchmark_return": None,
+            "missing_count": 0,
+            "stale_count": 0,
+            "unavailable_count": 0,
+            "excluded_count": 0,
+        }
+    )
+    await engine.dispose()
