@@ -258,7 +258,22 @@ class DeterministicBacktestEngine:
         turnover = q(sum((event.gross for event in events), Decimal("0")) / starting_capital * 100)
         data_fp = canonical_fingerprint(
             [
-                (str(item.id), item.period_start.isoformat(), str(item.open), str(item.close))
+                {
+                    "id": str(item.id),
+                    "provider": item.provider,
+                    "interval": item.interval.value,
+                    "period_start": item.period_start.isoformat(),
+                    "period_end": item.period_end.isoformat(),
+                    "open": str(item.open),
+                    "high": str(item.high),
+                    "low": str(item.low),
+                    "close": str(item.close),
+                    "adjusted_close": str(item.adjusted_close),
+                    "volume": item.volume,
+                    "currency": item.currency,
+                    "data_status": item.data_status.value,
+                    "received_at": item.received_at.isoformat(),
+                }
                 for item in ordered
             ]
         )
