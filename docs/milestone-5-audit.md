@@ -7,13 +7,13 @@ Historical Backtesting and Simulation**
 
 ## 2–6. Audit identity
 
-| Field | Value |
-| --- | --- |
-| Audit date | 2026-07-29 |
-| Repository | `C:\Dev\Atlas` |
-| Branch | `chore/milestone-5-audit` |
-| Commit audited | `2ed61938bc74930ebb703569f7f6b6009a7d7057` |
-| Auditor role | Independent quantitative-systems, model-risk, security, database-integrity, backtest-integrity, AI-safety, and release-gate reviewer |
+| Field          | Value                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Audit date     | 2026-07-29                                                                                                                           |
+| Repository     | `C:\Dev\Atlas`                                                                                                                       |
+| Branch         | `chore/milestone-5-audit`                                                                                                            |
+| Commit audited | `2ed61938bc74930ebb703569f7f6b6009a7d7057`                                                                                           |
+| Auditor role   | Independent quantitative-systems, model-risk, security, database-integrity, backtest-integrity, AI-safety, and release-gate reviewer |
 
 The implementation merge `2ed6193` and feature commit `ef926c3` were present.
 Pre-audit status was clean. The changes listed in section 51 are audit
@@ -39,16 +39,16 @@ mandatory `FAIL` rule.
 
 ## 9. Governance context
 
-| Decision | State |
-| --- | --- |
-| Risk owner | Adebayo Olaegbe |
-| Review date | 2026-08-27 |
-| Exception expiry | 2026-10-27 |
-| Private development | Previously authorised, but this audit does not accept Milestone 5 |
-| Production/public use | Prohibited |
-| External production AI | Prohibited |
-| Live trading, execution, advice, or real money | Prohibited |
-| Milestone 6 | Prohibited |
+| Decision                                       | State                                                             |
+| ---------------------------------------------- | ----------------------------------------------------------------- |
+| Risk owner                                     | Adebayo Olaegbe                                                   |
+| Review date                                    | 2026-08-27                                                        |
+| Exception expiry                               | 2026-10-27                                                        |
+| Private development                            | Previously authorised, but this audit does not accept Milestone 5 |
+| Production/public use                          | Prohibited                                                        |
+| External production AI                         | Prohibited                                                        |
+| Live trading, execution, advice, or real money | Prohibited                                                        |
+| Milestone 6                                    | Prohibited                                                        |
 
 This audit does not extend dates, create an exception, or authorise production.
 The decisions in ADR 0014 and `docs/security-risk-exceptions.md` remain
@@ -64,25 +64,25 @@ Terraform, add trading or payment capability, or begin Milestone 6.
 
 ## 12. Claim-to-evidence matrix
 
-| Claim | Independent evidence | Conclusion |
-| --- | --- | --- |
-| Tenant-scoped strategies and central permissions | Service/repository inspection; real-PostgreSQL workflow and foreign-tenant tests | Supported at service/API boundary |
-| Immutable versions and completed history | Migration triggers plus direct rejected `UPDATE`/`DELETE` attempts | Supported, subject to parent-integrity finding M5-AUD-005 |
-| Allow-listed SMA crossover | Strict discriminated schemas and adversarial unit tests | Supported |
-| Decimal deterministic engine | Decimal-only engine, 27 `NUMERIC(38,18)` columns, reconstruction test | Supported after corrections 001 and 003 |
-| Explicit assumptions | Immutable version/run configuration contains capital, fee, slippage, sizing, execution, currency, and benchmark | Supported |
-| Append-only events/results/explanations/audits | PostgreSQL triggers and direct mutation rejection | Supported |
-| Deterministic replay and fingerprints | Unit regressions, real-PostgreSQL reconstruction, expanded data/result checksums | Supported after correction 003 |
-| Look-ahead/leakage prevention | Future mutation, ordering, target-field, missing-data, and timestamp regressions | Supported after correction 001 |
-| Missing/stale/unavailable handling | Stale evidence exists; unavailable now fails closed; declared skip policies are not implemented | Partially supported; M5-AUD-006 open |
-| No external AI or live provider | Static import/dependency/network review and runtime inspection | Supported |
-| PostgreSQL concurrency | Separate `AsyncSession` races for run, conflict, execution, explanation, archive/version | Supported |
-| Migration head/reversibility | Fresh upgrade, 0007 downgrade/upgrade, `alembic check` | Supported |
-| Python totals | 111 passed; 85.27% coverage | Original 102/84.93% superseded |
-| JavaScript/package totals | 29 passed across 7 files | Supported |
-| Eight research tables and numeric schema | Metadata/migration/catalog inspection; 27 numeric columns | Supported |
-| Healthy Compose stack | Rebuilt images; PostgreSQL, Redis, API, and web healthy | Supported |
-| Functional research frontend | Only strategy list/create is materially API-backed; most workflows are static | Not supported; release-blocking |
+| Claim                                            | Independent evidence                                                                                            | Conclusion                                                |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Tenant-scoped strategies and central permissions | Service/repository inspection; real-PostgreSQL workflow and foreign-tenant tests                                | Supported at service/API boundary                         |
+| Immutable versions and completed history         | Migration triggers plus direct rejected `UPDATE`/`DELETE` attempts                                              | Supported, subject to parent-integrity finding M5-AUD-005 |
+| Allow-listed SMA crossover                       | Strict discriminated schemas and adversarial unit tests                                                         | Supported                                                 |
+| Decimal deterministic engine                     | Decimal-only engine, 27 `NUMERIC(38,18)` columns, reconstruction test                                           | Supported after corrections 001 and 003                   |
+| Explicit assumptions                             | Immutable version/run configuration contains capital, fee, slippage, sizing, execution, currency, and benchmark | Supported                                                 |
+| Append-only events/results/explanations/audits   | PostgreSQL triggers and direct mutation rejection                                                               | Supported                                                 |
+| Deterministic replay and fingerprints            | Unit regressions, real-PostgreSQL reconstruction, expanded data/result checksums                                | Supported after correction 003                            |
+| Look-ahead/leakage prevention                    | Future mutation, ordering, target-field, missing-data, and timestamp regressions                                | Supported after correction 001                            |
+| Missing/stale/unavailable handling               | Stale evidence exists; unavailable now fails closed; declared skip policies are not implemented                 | Partially supported; M5-AUD-006 open                      |
+| No external AI or live provider                  | Static import/dependency/network review and runtime inspection                                                  | Supported                                                 |
+| PostgreSQL concurrency                           | Separate `AsyncSession` races for run, conflict, execution, explanation, archive/version                        | Supported                                                 |
+| Migration head/reversibility                     | Fresh upgrade, 0007 downgrade/upgrade, `alembic check`                                                          | Supported                                                 |
+| Python totals                                    | 111 passed; 85.27% coverage                                                                                     | Original 102/84.93% superseded                            |
+| JavaScript/package totals                        | 29 passed across 7 files                                                                                        | Supported                                                 |
+| Eight research tables and numeric schema         | Metadata/migration/catalog inspection; 27 numeric columns                                                       | Supported                                                 |
+| Healthy Compose stack                            | Rebuilt images; PostgreSQL, Redis, API, and web healthy                                                         | Supported                                                 |
+| Functional research frontend                     | Only strategy list/create is materially API-backed; most workflows are static                                   | Not supported; release-blocking                           |
 
 ## 13. Architecture findings
 
@@ -249,8 +249,7 @@ matrix for every enumerated persistence boundary; see M5-AUD-007.
 Research permissions are defined centrally. Authenticated active identity,
 tenant, and membership are required. Viewer mutation, suspended/deactivated
 identity, foreign resources, and client-supplied role/permission claims are
-denied or concealed. The runtime unauthenticated strategies request returned
-401.
+denied or concealed. The runtime unauthenticated strategies request returned 401.
 
 ## 35. Tenant-isolation findings
 
@@ -335,22 +334,22 @@ external AI, or execution path was introduced by Milestone 5.
 
 ## 45. Quality-gate results
 
-| Gate | Final result |
-| --- | --- |
-| `pnpm install --frozen-lockfile` | Passed |
-| Prettier | Passed |
-| ESLint | Passed |
-| TypeScript | Passed |
-| JavaScript/package tests | Passed |
-| Next.js/package build | Passed |
-| Ruff format/check | Passed |
-| strict mypy | Passed, 63 source files |
-| Python tests and coverage | Passed |
-| `pip check` | No broken requirements |
-| `pip_audit` | No known vulnerabilities |
-| Governed Node audits | Passed |
-| Raw Node audits | One governed High development advisory |
-| `git diff --check` | Passed |
+| Gate                             | Final result                           |
+| -------------------------------- | -------------------------------------- |
+| `pnpm install --frozen-lockfile` | Passed                                 |
+| Prettier                         | Passed                                 |
+| ESLint                           | Passed                                 |
+| TypeScript                       | Passed                                 |
+| JavaScript/package tests         | Passed                                 |
+| Next.js/package build            | Passed                                 |
+| Ruff format/check                | Passed                                 |
+| strict mypy                      | Passed, 63 source files                |
+| Python tests and coverage        | Passed                                 |
+| `pip check`                      | No broken requirements                 |
+| `pip_audit`                      | No known vulnerabilities               |
+| Governed Node audits             | Passed                                 |
+| Raw Node audits                  | One governed High development advisory |
+| `git diff --check`               | Passed                                 |
 
 ## 46. Coverage result
 
@@ -391,14 +390,14 @@ authorisation.
 
 ## 50. Runtime results
 
-| Check | Result |
-| --- | --- |
-| Homepage | 200 |
-| `/health/live` | 200 |
-| `/health/ready` | 200 |
-| `/metrics` | 200 |
-| `/openapi.json` | 200 |
-| Unauthenticated research strategy request | 401 |
+| Check                                     | Result |
+| ----------------------------------------- | ------ |
+| Homepage                                  | 200    |
+| `/health/live`                            | 200    |
+| `/health/ready`                           | 200    |
+| `/metrics`                                | 200    |
+| `/openapi.json`                           | 200    |
+| Unauthenticated research strategy request | 401    |
 
 Authenticated workflow, role, tenancy, concurrency, data-quality, replay, and
 explanation behaviour was exercised through application services/API test
@@ -407,24 +406,24 @@ Clerk or external provider was used.
 
 ## 51. Corrective changes
 
-| ID | Defect and smallest safe correction | Files | Verification |
-| --- | --- | --- | --- |
-| M5-AUD-COR-001 | Close-based events were persisted at `period_start`, potentially preceding their decision. Persist next-open at period start and close policies at period end. | `services.py`, integration tests | same/next-close timestamp tests; full suite passed |
-| M5-AUD-COR-002 | `UNAVAILABLE` candles could enter simulation and were counted as zero unavailable. Fail atomically before engine execution. | `services.py`, integration tests | no run/result/audit after 422; repeatable real-PG test |
-| M5-AUD-COR-003 | Data fingerprint omitted material OHLCV/provenance fields and result checksum omitted benchmark/quality. Expand canonical evidence and wrap result checksum. | `engine.py`, `services.py`, unit/integration tests | field mutation and full reconstruction passed |
-| M5-AUD-COR-004 | New unavailable-data fixture collided on repeated suite execution. Delete only its exact five-row fixture window before reseeding. | integration test | integration suite passed twice consecutively |
-| M5-AUD-COR-005 | Protected-field coverage was incomplete. Add strict mass-assignment matrices. | unit tests | 14 research unit tests passed |
+| ID             | Defect and smallest safe correction                                                                                                                            | Files                                              | Verification                                           |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| M5-AUD-COR-001 | Close-based events were persisted at `period_start`, potentially preceding their decision. Persist next-open at period start and close policies at period end. | `services.py`, integration tests                   | same/next-close timestamp tests; full suite passed     |
+| M5-AUD-COR-002 | `UNAVAILABLE` candles could enter simulation and were counted as zero unavailable. Fail atomically before engine execution.                                    | `services.py`, integration tests                   | no run/result/audit after 422; repeatable real-PG test |
+| M5-AUD-COR-003 | Data fingerprint omitted material OHLCV/provenance fields and result checksum omitted benchmark/quality. Expand canonical evidence and wrap result checksum.   | `engine.py`, `services.py`, unit/integration tests | field mutation and full reconstruction passed          |
+| M5-AUD-COR-004 | New unavailable-data fixture collided on repeated suite execution. Delete only its exact five-row fixture window before reseeding.                             | integration test                                   | integration suite passed twice consecutively           |
+| M5-AUD-COR-005 | Protected-field coverage was incomplete. Add strict mass-assignment matrices.                                                                                  | unit tests                                         | 14 research unit tests passed                          |
 
 ## 52. Unresolved findings
 
-| ID | Severity | Finding | Risk and recommendation | State |
-| --- | --- | --- | --- | --- |
-| M5-AUD-004 | High | Most research frontend workflows are static shells | Materially unsupported acceptance claim; implement API-backed, permission-aware workflows and E2E evidence on a new authorised remediation branch | Open |
-| M5-AUD-005 | Medium | Run/version/strategy parent coherence is not fully enforced by PostgreSQL; `current_version_id` and some audit references lack FKs | Same-tenant malformed linkage can bypass service invariants; add non-cyclic composite integrity or validated constraint design and migration tests | Open |
-| M5-AUD-006 | Medium | Declared `skip_event`/`skip_observation` missing-data policies and calendar-gap counts are not implemented | UI/configuration can imply unsupported handling; implement deterministically or remove from accepted schemas/UI and document | Open |
-| M5-AUD-007 | Medium | Atomic failure injection does not cover every enumerated persistence boundary | Partial-state regressions may escape current tests; add transaction fault hooks/tests without weakening rollback | Open |
-| M5-AUD-008 | Medium | Research metrics are declared but largely unused | Failures, conflicts, quality outcomes, and invariant breaches lack operational evidence; instrument bounded labels | Open |
-| M5-AUD-009 | Low | Research accessibility has no browser/WCAG automation | Accessibility regressions may be missed; add keyboard/focus/semantic automated evidence when workflows are implemented | Open |
+| ID         | Severity | Finding                                                                                                                            | Risk and recommendation                                                                                                                            | State |
+| ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| M5-AUD-004 | High     | Most research frontend workflows are static shells                                                                                 | Materially unsupported acceptance claim; implement API-backed, permission-aware workflows and E2E evidence on a new authorised remediation branch  | Open  |
+| M5-AUD-005 | Medium   | Run/version/strategy parent coherence is not fully enforced by PostgreSQL; `current_version_id` and some audit references lack FKs | Same-tenant malformed linkage can bypass service invariants; add non-cyclic composite integrity or validated constraint design and migration tests | Open  |
+| M5-AUD-006 | Medium   | Declared `skip_event`/`skip_observation` missing-data policies and calendar-gap counts are not implemented                         | UI/configuration can imply unsupported handling; implement deterministically or remove from accepted schemas/UI and document                       | Open  |
+| M5-AUD-007 | Medium   | Atomic failure injection does not cover every enumerated persistence boundary                                                      | Partial-state regressions may escape current tests; add transaction fault hooks/tests without weakening rollback                                   | Open  |
+| M5-AUD-008 | Medium   | Research metrics are declared but largely unused                                                                                   | Failures, conflicts, quality outcomes, and invariant breaches lack operational evidence; instrument bounded labels                                 | Open  |
+| M5-AUD-009 | Low      | Research accessibility has no browser/WCAG automation                                                                              | Accessibility regressions may be missed; add keyboard/focus/semantic automated evidence when workflows are implemented                             | Open  |
 
 ## 53. Known limitations
 
@@ -444,14 +443,14 @@ public access, advice, execution, custody, payments, or customer funds.
 
 ## 55. Final decision
 
-| Decision | Result |
-| --- | --- |
-| Milestone 5 technical status | **FAIL** |
-| Private-development permission | Existing governance remains, but Milestone 5 acceptance is not granted |
-| Production readiness | **PROHIBITED / NOT READY** |
-| External-AI permission | **PROHIBITED** |
-| Live-trading/execution permission | **PROHIBITED** |
-| Real-money/advice permission | **PROHIBITED** |
+| Decision                          | Result                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| Milestone 5 technical status      | **FAIL**                                                               |
+| Private-development permission    | Existing governance remains, but Milestone 5 acceptance is not granted |
+| Production readiness              | **PROHIBITED / NOT READY**                                             |
+| External-AI permission            | **PROHIBITED**                                                         |
+| Live-trading/execution permission | **PROHIBITED**                                                         |
+| Real-money/advice permission      | **PROHIBITED**                                                         |
 
 ## 56. Milestone 6 decision
 
@@ -523,6 +522,6 @@ Failed or non-passing commands:
    private development only through 2026-10-27. Production remains
    prohibited.
 7. Docker Scout returned `Log in with your Docker ID or email address to use
-   docker scout`. No authentication was already available, so the scan was
+docker scout`. No authentication was already available, so the scan was
    stopped without requesting or storing credentials. Final state: not run,
    governed evidence retained.
