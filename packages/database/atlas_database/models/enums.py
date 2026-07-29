@@ -204,6 +204,33 @@ class ValuationCompleteness(StrEnum):
     INCOMPLETE = "incomplete"
 
 
+class ResearchStrategyStatus(StrEnum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class BacktestRunStatus(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class BacktestEventType(StrEnum):
+    SIMULATED_ENTRY = "simulated_entry"
+    SIMULATED_EXIT = "simulated_exit"
+
+
+class ResearchCompleteness(StrEnum):
+    COMPLETE = "complete"
+    INCOMPLETE = "incomplete"
+
+
+class ExplanationStatus(StrEnum):
+    COMPLETED = "completed"
+    UNAVAILABLE = "unavailable"
+
+
 class SubscriptionStatus(StrEnum):
     INCOMPLETE = "incomplete"
     INCOMPLETE_EXPIRED = "incomplete_expired"

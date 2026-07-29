@@ -120,7 +120,7 @@ export function PortfolioBrowser({ creationOnly = false }: { creationOnly?: bool
               Simulated portfolios
             </h2>
             <Link
-              href={"/app/portfolios/new" as Route}
+              href="/app/portfolios/new"
               className="rounded-xl bg-cyan-300 px-4 py-2 font-semibold text-slate-950"
             >
               Create simulated portfolio

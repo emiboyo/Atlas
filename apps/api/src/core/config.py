@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     market_max_candle_days: int = Field(default=366, ge=1, le=3660)
     watchlist_max_per_tenant: int = Field(default=25, ge=1, le=500)
     watchlist_max_items: int = Field(default=100, ge=1, le=1000)
+    research_explanations_enabled: bool = True
 
     @model_validator(mode="after")
     def validate_production_safety(self) -> "Settings":

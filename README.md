@@ -1,8 +1,8 @@
 # Atlas AI
 
 Milestone 4 received a Conditional Pass under private-development controls. Milestone 5 private
-development is authorised only after the committed governance record for explainable strategy
-research, historical backtesting, and simulation. Production, public access, live providers,
+development is authorised by ADR 0014 for explainable strategy research, deterministic historical
+backtesting, and simulation. Production, public access, live providers,
 real money, trading, brokerage, execution, custody, advice, autonomous financial action,
 customer funds, and Milestone 6 remain prohibited.
 
@@ -147,6 +147,12 @@ docker compose up --build
 | Prometheus metrics | http://localhost:8000/metrics      |
 
 Protected simulated portfolio UI: `http://localhost:3000/app/portfolios`.
+Protected historical research UI: `http://localhost:3000/app/research`.
+
+Historical simulation only — not investment advice and not a prediction of future performance.
+Research routes have no broker, order, custody, payment, or real-money capability. See
+[strategy research architecture](docs/strategy-research-architecture.md),
+[backtest engine](docs/backtest-engine.md), and [backtest integrity](docs/backtest-integrity.md).
 
 Stop services with `docker compose down`. Add `--volumes` only when you intentionally want to
 delete local PostgreSQL and Redis data.

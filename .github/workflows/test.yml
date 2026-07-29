@@ -65,7 +65,7 @@ jobs:
       - run: python -m pip_audit -r apps/api/requirements.txt
       - run: alembic -c packages/database/alembic.ini upgrade head
       - run: ATLAS_TEST_DATABASE_URL="$ATLAS_DATABASE_URL" pytest --cov=apps.api.src --cov=packages.database.atlas_database --cov-report=term-missing --cov-fail-under=80
-      - run: alembic -c packages/database/alembic.ini downgrade 20260727_0005
+      - run: alembic -c packages/database/alembic.ini downgrade 20260728_0006
       - run: alembic -c packages/database/alembic.ini upgrade head
       - run: alembic -c packages/database/alembic.ini check
 
