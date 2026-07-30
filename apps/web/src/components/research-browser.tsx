@@ -24,6 +24,7 @@ export function ResearchBrowser({ creationOnly = false }: { creationOnly?: boole
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [name, setName] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("Loading authorised research workspace…");
 
   async function load(selected: string) {
@@ -63,6 +64,8 @@ export function ResearchBrowser({ creationOnly = false }: { creationOnly?: boole
 
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
+    setBusy(true);
     setMessage("");
     try {
       const token = await getToken();
@@ -80,6 +83,8 @@ export function ResearchBrowser({ creationOnly = false }: { creationOnly?: boole
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Strategy creation failed.");
       document.querySelector<HTMLElement>('[role="status"]')?.focus();
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -133,8 +138,11 @@ export function ResearchBrowser({ creationOnly = false }: { creationOnly?: boole
               />
             </label>
           </div>
-          <button className="mt-6 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950">
-            Create research strategy
+          <button
+            disabled={busy}
+            className="mt-6 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {busy ? "Creating…" : "Create research strategy"}
           </button>
         </form>
       ) : (
