@@ -18,6 +18,7 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "test:a11y": "pnpm --dir apps/web test:a11y",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write --ignore-unknown apps packages infrastructure docs docker scripts .github package.json pnpm-workspace.yaml turbo.json docker-compose.yml README.md .prettierrc",
     "format:check": "prettier --check --ignore-unknown apps packages infrastructure docs docker scripts .github package.json pnpm-workspace.yaml turbo.json docker-compose.yml README.md .prettierrc",

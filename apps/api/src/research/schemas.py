@@ -121,7 +121,7 @@ class BacktestCreate(StrictModel):
         "fixed_quantity",
     ]
     sizing_value: Positive
-    missing_data_policy: Literal["fail_run", "skip_event", "skip_observation"]
+    missing_data_policy: Literal["fail_run"] = "fail_run"
 
     @model_validator(mode="after")
     def bounded(self) -> "BacktestCreate":

@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:a11y": "playwright test --config e2e/playwright.config.ts",
     "clean": "rimraf .next coverage"
   },
   "dependencies": {
@@ -29,6 +30,8 @@
   "devDependencies": {
     "@atlas/eslint-config": "workspace:*",
     "@atlas/typescript-config": "workspace:*",
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.15.32",
@@ -36,12 +39,14 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "^4.5.2",
     "autoprefixer": "^10.4.21",
+    "axe-core": "^4.12.1",
     "eslint": "9.39.5",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.6",
     "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
+    "vite": "^7.3.6",
     "vitest": "^3.2.4"
   }
 }

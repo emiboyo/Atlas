@@ -42,6 +42,19 @@ class ResearchStrategy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         UniqueConstraint("id", "tenant_id", name="uq_research_strategies_id_tenant"),
         UniqueConstraint("tenant_id", "name", name="uq_research_strategies_tenant_name"),
+        ForeignKeyConstraint(
+            ["tenant_id", "id", "current_version_id"],
+            [
+                "research_strategy_versions.tenant_id",
+                "research_strategy_versions.strategy_id",
+                "research_strategy_versions.id",
+            ],
+            name="fk_research_strategy_current_version_parent",
+            ondelete="RESTRICT",
+            deferrable=True,
+            initially="DEFERRED",
+            use_alter=True,
+        ),
         Index("ix_research_strategies_tenant_status", "tenant_id", "status"),
     )
     tenant_id: Mapped[UUID] = mapped_column(ForeignKey("tenants.id", ondelete="RESTRICT"))
@@ -67,6 +80,9 @@ class ResearchStrategyVersion(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base
     __tablename__ = "research_strategy_versions"
     __table_args__ = (
         UniqueConstraint("id", "tenant_id", name="uq_research_versions_id_tenant"),
+        UniqueConstraint(
+            "tenant_id", "strategy_id", "id", name="uq_research_versions_parent_identity"
+        ),
         UniqueConstraint("strategy_id", "version_number", name="uq_research_version_number"),
         UniqueConstraint("strategy_id", "idempotency_key", name="uq_research_version_idempotency"),
         ForeignKeyConstraint(
@@ -99,6 +115,13 @@ class BacktestRun(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
     __tablename__ = "backtest_runs"
     __table_args__ = (
         UniqueConstraint("id", "tenant_id", name="uq_backtest_runs_id_tenant"),
+        UniqueConstraint(
+            "tenant_id",
+            "strategy_id",
+            "strategy_version_id",
+            "id",
+            name="uq_backtest_runs_parent_identity",
+        ),
         UniqueConstraint("strategy_id", "idempotency_key", name="uq_backtest_run_idempotency"),
         ForeignKeyConstraint(
             ["strategy_id", "tenant_id"],
@@ -107,9 +130,13 @@ class BacktestRun(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(
-            ["strategy_version_id", "tenant_id"],
-            ["research_strategy_versions.id", "research_strategy_versions.tenant_id"],
-            name="fk_backtest_runs_version_tenant",
+            ["tenant_id", "strategy_id", "strategy_version_id"],
+            [
+                "research_strategy_versions.tenant_id",
+                "research_strategy_versions.strategy_id",
+                "research_strategy_versions.id",
+            ],
+            name="fk_backtest_runs_version_parent",
             ondelete="RESTRICT",
         ),
         CheckConstraint("start_date < end_date", name="backtest_run_date_range"),
@@ -117,6 +144,9 @@ class BacktestRun(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
         CheckConstraint("fee_value >= 0", name="backtest_run_fee_nonnegative"),
         CheckConstraint(
             "slippage_bps >= 0 AND slippage_bps <= 1000", name="backtest_run_slippage_bounded"
+        ),
+        CheckConstraint(
+            "missing_data_policy = 'fail_run'", name="backtest_run_supported_missing_policy"
         ),
         Index("ix_backtest_runs_tenant_status", "tenant_id", "status"),
         Index("ix_backtest_runs_strategy_requested", "strategy_id", "requested_at"),
@@ -308,6 +338,31 @@ class ResearchAuditEvent(UUIDPrimaryKeyMixin, ImmutableTimestampMixin, Base):
             ["research_strategies.id", "research_strategies.tenant_id"],
             name="fk_research_audit_strategy_tenant",
             ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "strategy_id", "strategy_version_id"],
+            [
+                "research_strategy_versions.tenant_id",
+                "research_strategy_versions.strategy_id",
+                "research_strategy_versions.id",
+            ],
+            name="fk_research_audit_version_parent",
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "strategy_id", "strategy_version_id", "run_id"],
+            [
+                "backtest_runs.tenant_id",
+                "backtest_runs.strategy_id",
+                "backtest_runs.strategy_version_id",
+                "backtest_runs.id",
+            ],
+            name="fk_research_audit_run_parent",
+            ondelete="RESTRICT",
+        ),
+        CheckConstraint(
+            "run_id IS NULL OR strategy_version_id IS NOT NULL",
+            name="research_audit_run_requires_version",
         ),
         Index("ix_research_audit_strategy_created", "strategy_id", "created_at"),
         Index("ix_research_audit_run_created", "run_id", "created_at"),

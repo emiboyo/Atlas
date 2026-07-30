@@ -1039,7 +1039,11 @@ function RunDetail({ data }: { data: { run: Run; result: Result | null } }) {
 
 function EventTable({ events }: { events: Event[] }) {
   return (
-    <div className="atlas-panel overflow-x-auto p-6">
+    <div
+      className="atlas-panel overflow-x-auto p-6"
+      tabIndex={0}
+      aria-label="Scrollable historical simulated event evidence"
+    >
       <table className="w-full text-left text-sm">
         <caption className="mb-4 text-left text-lg font-semibold">
           Historical simulated event sequence

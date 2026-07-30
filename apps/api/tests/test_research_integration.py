@@ -1,9 +1,10 @@
+# ruff: noqa: B023
 import asyncio
 import os
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import delete, func, select, text
@@ -20,6 +21,7 @@ from apps.api.src.research.schemas import (
     ExplanationCreate,
     ResearchRule,
     StrategyCreate,
+    StrategyUpdate,
     VersionCreate,
 )
 from apps.api.src.research.services import ResearchService
@@ -30,6 +32,7 @@ from packages.database.atlas_database.models.enums import (
 )
 from packages.database.atlas_database.models.instruments import HistoricalCandle
 from packages.database.atlas_database.models.research import (
+    BacktestEquityPoint,
     BacktestEvent,
     BacktestExplanation,
     BacktestResult,
@@ -199,6 +202,333 @@ async def test_complete_research_workflow_is_reproducible_and_isolated() -> None
             )
             await session.commit()
         await session.rollback()
+    await engine.dispose()
+
+
+async def test_postgresql_rejects_malformed_research_parents_and_policy() -> None:
+    engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    owner, strategy, version, run_data = await create_concurrency_subject(
+        factory, label="Parent integrity source"
+    )
+    async with factory() as session:
+        other_strategy = await ResearchService().create_strategy(
+            session,
+            owner,
+            StrategyCreate(
+                tenant_id=strategy.tenant_id,
+                name=f"Parent integrity target {uuid4().hex[:8]}",
+                research_purpose="Database parent-coherence evidence",
+            ),
+            "parent-target",
+        )
+        other_version = await ResearchService().create_version(
+            session,
+            owner,
+            other_strategy.id,
+            VersionCreate(
+                version_label="Wrong parent",
+                base_currency="GBP",
+                listing_id=UUID(cast(str, version.configuration["listing_id"])),
+                rules=[
+                    ResearchRule(
+                        id="cross",
+                        rule_type="sma_crossover",
+                        short_window=2,
+                        long_window=3,
+                    )
+                ],
+            ),
+            f"wrong-parent-{uuid4()}",
+            "wrong-parent",
+        )
+    async with factory() as session:
+        run = await ResearchService().create_run(
+            session, owner, run_data, f"parent-source-{uuid4()}", "parent-source"
+        )
+
+    clone_sql = text(
+        """
+        INSERT INTO backtest_runs (
+          tenant_id, strategy_id, strategy_version_id, listing_id, status,
+          idempotency_key, request_fingerprint, configuration_fingerprint,
+          data_fingerprint, start_date, end_date, starting_capital, base_currency,
+          fee_model, fee_value, slippage_model, slippage_bps, execution_policy,
+          sizing_policy, sizing_value, missing_data_policy, engine_version,
+          software_version, requested_by_user_id, requested_at, started_at,
+          completed_at, failure_code, is_historical_simulation, id, created_at
+        )
+        SELECT tenant_id, strategy_id, :version_id, listing_id, status,
+          :key, request_fingerprint, configuration_fingerprint, data_fingerprint,
+          start_date, end_date, starting_capital, base_currency, fee_model,
+          fee_value, slippage_model, slippage_bps, execution_policy, sizing_policy,
+          sizing_value, :policy, engine_version, software_version,
+          requested_by_user_id, requested_at, started_at, completed_at,
+          failure_code, is_historical_simulation, :id, now()
+        FROM backtest_runs WHERE id = :source_id
+        """
+    )
+    async with factory() as session:
+        with pytest.raises(DBAPIError):
+            await session.execute(
+                clone_sql,
+                {
+                    "version_id": other_version.id,
+                    "key": f"wrong-parent-{uuid4()}",
+                    "policy": "fail_run",
+                    "id": uuid4(),
+                    "source_id": run.id,
+                },
+            )
+            await session.commit()
+        await session.rollback()
+        assert await session.scalar(text("SELECT 1")) == 1
+
+    async with factory() as session:
+        strategy_row = await session.get(ResearchStrategy, strategy.id)
+        assert strategy_row is not None
+        strategy_row.current_version_id = other_version.id
+        with pytest.raises(DBAPIError):
+            await session.commit()
+        await session.rollback()
+        assert await session.scalar(text("SELECT 1")) == 1
+
+    async with factory() as session:
+        with pytest.raises(DBAPIError):
+            await session.execute(
+                clone_sql,
+                {
+                    "version_id": version.id,
+                    "key": f"unsupported-policy-{uuid4()}",
+                    "policy": "skip_event",
+                    "id": uuid4(),
+                    "source_id": run.id,
+                },
+            )
+            await session.commit()
+        await session.rollback()
+        assert await session.scalar(text("SELECT 1")) == 1
+    await engine.dispose()
+
+
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        "after_run",
+        "after_requested_audit",
+        "after_started_audit",
+        "after_first_event",
+        "after_equity",
+        "before_result",
+        "after_result",
+        "before_completed_audit",
+        "final_commit",
+    ],
+)
+async def test_backtest_fault_boundaries_roll_back_repeatably(
+    monkeypatch: pytest.MonkeyPatch, boundary: str
+) -> None:
+    engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    owner, strategy, _version, run_data = await create_concurrency_subject(
+        factory, label=f"Fault {boundary}"
+    )
+    key = f"fault-{boundary}-{uuid4()}"
+
+    for _attempt in range(2):
+        async with factory() as session:
+            service = ResearchService()
+            original_add = session.add
+            original_flush = session.flush
+            original_audit = service._audit
+
+            def fault_add(value: object) -> None:
+                if boundary == "before_result" and isinstance(value, BacktestResult):
+                    raise RuntimeError(boundary)
+                original_add(value)
+                if (
+                    (boundary == "after_first_event" and isinstance(value, BacktestEvent))
+                    or (boundary == "after_equity" and isinstance(value, BacktestEquityPoint))
+                    or (boundary == "after_result" and isinstance(value, BacktestResult))
+                ):
+                    raise RuntimeError(boundary)
+
+            async def fault_flush(*args: object, **kwargs: object) -> None:
+                await original_flush(*args, **kwargs)
+                if boundary == "after_run":
+                    raise RuntimeError(boundary)
+
+            def fault_audit(*args: object, **kwargs: object) -> None:
+                event_type = cast(str, args[3])
+                if boundary == "before_completed_audit" and event_type.endswith(".completed"):
+                    raise RuntimeError(boundary)
+                original_audit(*args, **kwargs)
+                if (boundary == "after_requested_audit" and event_type.endswith(".requested")) or (
+                    boundary == "after_started_audit" and event_type.endswith(".started")
+                ):
+                    raise RuntimeError(boundary)
+
+            async def fault_commit(_session: AsyncSession) -> None:
+                raise RuntimeError(boundary)
+
+            monkeypatch.setattr(session, "add", fault_add)
+            monkeypatch.setattr(session, "flush", fault_flush)
+            monkeypatch.setattr(service, "_audit", fault_audit)
+            if boundary == "final_commit":
+                monkeypatch.setattr(service, "_commit", fault_commit)
+            with pytest.raises(RuntimeError, match=boundary):
+                await service.create_run(session, owner, run_data, key, "fault")
+            await session.rollback()
+
+        async with factory() as verification:
+            assert (
+                await verification.scalar(
+                    select(func.count())
+                    .select_from(BacktestRun)
+                    .where(
+                        BacktestRun.strategy_id == strategy.id,
+                        BacktestRun.idempotency_key == key,
+                    )
+                )
+                == 0
+            )
+            assert (
+                await verification.scalar(
+                    select(func.count())
+                    .select_from(ResearchAuditEvent)
+                    .where(ResearchAuditEvent.operation_id == key)
+                )
+                == 0
+            )
+            assert await verification.scalar(text("SELECT 1")) == 1
+    await engine.dispose()
+
+
+async def test_version_explanation_and_mutation_faults_roll_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    owner, strategy, version, run_data = await create_concurrency_subject(
+        factory, label="Non-run fault matrix"
+    )
+    async with factory() as session:
+        run = await ResearchService().create_run(
+            session, owner, run_data, f"fault-explanation-run-{uuid4()}", "fault"
+        )
+
+    version_key = f"fault-version-{uuid4()}"
+    async with factory() as session:
+        service = ResearchService()
+        original_flush = session.flush
+
+        async def fail_after_version(*args: object, **kwargs: object) -> None:
+            await original_flush(*args, **kwargs)
+            raise RuntimeError("after_version")
+
+        monkeypatch.setattr(session, "flush", fail_after_version)
+        with pytest.raises(RuntimeError, match="after_version"):
+            await service.create_version(
+                session,
+                owner,
+                strategy.id,
+                VersionCreate(
+                    version_label="Faulted",
+                    base_currency="GBP",
+                    listing_id=UUID(cast(str, version.configuration["listing_id"])),
+                    rules=[
+                        ResearchRule(
+                            id="cross",
+                            rule_type="sma_crossover",
+                            short_window=2,
+                            long_window=3,
+                        )
+                    ],
+                ),
+                version_key,
+                "fault",
+            )
+        await session.rollback()
+    async with factory() as verification:
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(ResearchStrategyVersion)
+                .where(ResearchStrategyVersion.idempotency_key == version_key)
+            )
+            == 0
+        )
+
+    for boundary in ("after_explanation", "before_explanation_audit", "explanation_commit"):
+        key = f"{boundary}-{uuid4()}"
+        async with factory() as session:
+            service = ResearchService()
+            original_flush = session.flush
+            original_audit = service._audit
+
+            async def fail_flush(*args: object, **kwargs: object) -> None:
+                await original_flush(*args, **kwargs)
+                if boundary == "after_explanation":
+                    raise RuntimeError(boundary)
+
+            def fail_audit(*args: object, **kwargs: object) -> None:
+                if boundary == "before_explanation_audit":
+                    raise RuntimeError(boundary)
+                original_audit(*args, **kwargs)
+
+            async def fail_commit(_session: AsyncSession) -> None:
+                raise RuntimeError(boundary)
+
+            monkeypatch.setattr(session, "flush", fail_flush)
+            monkeypatch.setattr(service, "_audit", fail_audit)
+            if boundary == "explanation_commit":
+                monkeypatch.setattr(service, "_commit", fail_commit)
+            with pytest.raises(RuntimeError, match=boundary):
+                await service.explain(
+                    session,
+                    owner,
+                    run.id,
+                    ExplanationCreate(explanation_type="run_summary"),
+                    key,
+                    "fault",
+                )
+            await session.rollback()
+        async with factory() as verification:
+            assert (
+                await verification.scalar(
+                    select(func.count())
+                    .select_from(BacktestExplanation)
+                    .where(BacktestExplanation.idempotency_key == key)
+                )
+                == 0
+            )
+
+    for operation in ("archive", "update"):
+        async with factory() as session:
+            service = ResearchService()
+
+            async def fail_commit(_session: AsyncSession) -> None:
+                raise RuntimeError(operation)
+
+            monkeypatch.setattr(service, "_commit", fail_commit)
+            with pytest.raises(RuntimeError, match=operation):
+                if operation == "archive":
+                    await service.archive_strategy(session, owner, strategy.id, "fault")
+                else:
+                    await service.update_strategy(
+                        session,
+                        owner,
+                        strategy.id,
+                        StrategyUpdate(name="Must roll back", version=1),
+                        "fault",
+                    )
+            await session.rollback()
+        async with factory() as verification:
+            unchanged = await verification.get(ResearchStrategy, strategy.id)
+            assert unchanged is not None
+            assert unchanged.status.value == "active"
+            assert unchanged.name != "Must roll back"
+            assert unchanged.version == 1
     await engine.dispose()
 
 

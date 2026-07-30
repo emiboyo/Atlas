@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from hashlib import sha256
+from time import perf_counter
 from typing import cast
 from uuid import UUID
 
@@ -17,7 +18,16 @@ from apps.api.src.research.engine import (
     DeterministicBacktestEngine,
     canonical_fingerprint,
 )
-from apps.api.src.research.metrics import BACKTESTS, EXPLANATIONS, RESEARCH_CONFLICTS
+from apps.api.src.research.metrics import (
+    BACKTEST_DURATION,
+    BACKTESTS,
+    DATA_QUALITY,
+    EXPLANATIONS,
+    RESEARCH_CONFLICTS,
+    track_backtest,
+    track_explanation,
+    track_strategy,
+)
 from apps.api.src.research.repositories import ResearchRepository
 from apps.api.src.research.schemas import (
     AuditEventResponse,
@@ -137,6 +147,7 @@ class ResearchService:
         self.repo = ResearchRepository()
         self.auth = ResearchAuthorisation()
 
+    @track_strategy("create")
     async def create_strategy(
         self, session: AsyncSession, actor: User, data: StrategyCreate, request_id: str | None
     ) -> StrategyResponse:
@@ -173,6 +184,7 @@ class ResearchService:
             await self.auth.strategy(session, actor, strategy_id, Permission.STRATEGY_READ)
         )
 
+    @track_strategy("update")
     async def update_strategy(
         self,
         session: AsyncSession,
@@ -198,6 +210,7 @@ class ResearchService:
         await session.refresh(value)
         return strategy_response(value)
 
+    @track_strategy("archive")
     async def archive_strategy(
         self, session: AsyncSession, actor: User, strategy_id: UUID, request_id: str | None
     ) -> StrategyResponse:
@@ -234,6 +247,7 @@ class ResearchService:
             can_read_audit=can(Permission.BACKTEST_AUDIT_READ),
         )
 
+    @track_strategy("version_create")
     async def create_version(
         self,
         session: AsyncSession,
@@ -264,6 +278,7 @@ class ResearchService:
         )
         if existing:
             if existing.request_fingerprint != request_fp:
+                RESEARCH_CONFLICTS.labels(operation="version_create").inc()
                 raise error("idempotency_conflict", "The idempotency key was reused.", 409)
             return version_response(existing)
         configuration = data.model_dump(mode="json")
@@ -311,6 +326,7 @@ class ResearchService:
         await self.auth.strategy(session, actor, strategy_id, Permission.STRATEGY_READ)
         return [version_response(item) for item in await self.repo.versions(session, strategy_id)]
 
+    @track_backtest
     async def create_run(
         self,
         session: AsyncSession,
@@ -319,6 +335,7 @@ class ResearchService:
         key: str,
         request_id: str | None,
     ) -> RunResponse:
+        started = perf_counter()
         strategy = await self.auth.strategy(
             session, actor, data.strategy_id, Permission.BACKTEST_CREATE, lock=True
         )
@@ -335,7 +352,11 @@ class ResearchService:
         )
         if existing:
             if existing.request_fingerprint != request_fp:
+                BACKTESTS.labels(outcome="idempotency_conflict").inc()
+                RESEARCH_CONFLICTS.labels(operation="backtest_create").inc()
                 raise error("idempotency_conflict", "The idempotency key was reused.", 409)
+            BACKTESTS.labels(outcome="idempotent_replay").inc()
+            BACKTEST_DURATION.observe(perf_counter() - started)
             return run_response(existing)
         configuration = {**data.model_dump(mode="json"), "strategy": version.configuration}
         listing_id = UUID(cast(str, version.configuration["listing_id"]))
@@ -395,6 +416,9 @@ class ResearchService:
         unavailable = sum(item.data_status == MarketDataStatus.UNAVAILABLE for item in candles)
         if unavailable:
             await session.rollback()
+            BACKTESTS.labels(outcome="data_quality_failure").inc()
+            DATA_QUALITY.labels(outcome="unavailable").inc()
+            BACKTEST_DURATION.observe(perf_counter() - started)
             raise error(
                 "market_data_unavailable",
                 "Unavailable historical observations cannot be simulated.",
@@ -417,6 +441,9 @@ class ResearchService:
             )
         except ValueError as exc:
             await session.rollback()
+            BACKTESTS.labels(outcome="invariant_failure").inc()
+            DATA_QUALITY.labels(outcome="insufficient").inc()
+            BACKTEST_DURATION.observe(perf_counter() - started)
             raise error("insufficient_historical_data", str(exc), 422) from exc
         run.data_fingerprint = simulation.data_fingerprint
         for sequence, item in enumerate(simulation.events, 1):
@@ -525,6 +552,8 @@ class ResearchService:
         await self._commit(session)
         await session.refresh(run)
         BACKTESTS.labels(outcome="completed").inc()
+        DATA_QUALITY.labels(outcome="stale" if stale else "complete").inc()
+        BACKTEST_DURATION.observe(perf_counter() - started)
         return run_response(run)
 
     async def list_runs(
@@ -606,6 +635,7 @@ class ResearchService:
             ),
         )
 
+    @track_explanation
     async def explain(
         self,
         session: AsyncSession,
@@ -634,7 +664,10 @@ class ResearchService:
         )
         if existing:
             if existing.request_fingerprint != request_fp:
+                EXPLANATIONS.labels(outcome="conflict").inc()
+                RESEARCH_CONFLICTS.labels(operation="explanation_create").inc()
                 raise error("idempotency_conflict", "The idempotency key was reused.", 409)
+            EXPLANATIONS.labels(outcome="replay").inc()
             return ExplanationResponse.model_validate(existing, from_attributes=True)
         result = await self.repo.result(session, run.id)
         if result is None:
@@ -683,7 +716,7 @@ class ResearchService:
         )
         await self._commit(session)
         await session.refresh(value)
-        EXPLANATIONS.labels(outcome="completed").inc()
+        EXPLANATIONS.labels(outcome="generated").inc()
         return ExplanationResponse.model_validate(value, from_attributes=True)
 
     async def explanations(
@@ -751,5 +784,5 @@ class ResearchService:
             await session.commit()
         except (IntegrityError, DBAPIError) as exc:
             await session.rollback()
-            RESEARCH_CONFLICTS.labels(code="concurrency_conflict").inc()
+            RESEARCH_CONFLICTS.labels(operation="transaction_commit").inc()
             raise error("concurrency_conflict", "The research operation conflicted.", 409) from exc

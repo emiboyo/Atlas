@@ -90,6 +90,12 @@ export function ResearchBrowser({ creationOnly = false }: { creationOnly?: boole
 
   return (
     <div className="space-y-7">
+      <div>
+        <p className="text-sm uppercase tracking-[0.2em] text-cyan-300">Private development</p>
+        <h1 className="font-display mt-3 text-4xl font-semibold">
+          {creationOnly ? "Create research strategy" : "Research strategies"}
+        </h1>
+      </div>
       <ResearchNotice />
       <label className="block max-w-xl">
         <span className="text-sm text-slate-300">Research workspace</span>
