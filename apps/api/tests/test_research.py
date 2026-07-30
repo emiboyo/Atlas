@@ -174,6 +174,28 @@ def test_research_metrics_have_only_bounded_labels_and_documented_buckets() -> N
         )
 
 
+async def test_strategy_metric_replay_is_not_counted_as_success() -> None:
+    from apps.api.src.research.metrics import (
+        STRATEGY_OPERATIONS,
+        set_strategy_success_outcome,
+        track_strategy,
+    )
+
+    success = STRATEGY_OPERATIONS.labels(operation="version_create", outcome="success")
+    replay = STRATEGY_OPERATIONS.labels(operation="version_create", outcome="replay")
+    success_before = success._value.get()
+    replay_before = replay._value.get()
+
+    @track_strategy("version_create")
+    async def replay_version() -> None:
+        set_strategy_success_outcome("replay")
+
+    await replay_version()
+
+    assert success._value.get() == success_before
+    assert replay._value.get() == replay_before + 1
+
+
 @pytest.mark.parametrize(
     ("schema", "payload"),
     [

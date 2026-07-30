@@ -24,6 +24,7 @@ from apps.api.src.research.metrics import (
     DATA_QUALITY,
     EXPLANATIONS,
     RESEARCH_CONFLICTS,
+    set_strategy_success_outcome,
     track_backtest,
     track_explanation,
     track_strategy,
@@ -280,6 +281,7 @@ class ResearchService:
             if existing.request_fingerprint != request_fp:
                 RESEARCH_CONFLICTS.labels(operation="version_create").inc()
                 raise error("idempotency_conflict", "The idempotency key was reused.", 409)
+            set_strategy_success_outcome("replay")
             return version_response(existing)
         configuration = data.model_dump(mode="json")
         number = (

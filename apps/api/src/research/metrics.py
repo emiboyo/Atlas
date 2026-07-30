@@ -1,4 +1,5 @@
 from collections.abc import Callable, Coroutine
+from contextvars import ContextVar
 from functools import wraps
 from typing import Any, ParamSpec, TypeVar
 
@@ -8,6 +9,9 @@ from apps.api.src.core.errors import ApplicationError
 
 P = ParamSpec("P")
 R = TypeVar("R")
+_strategy_success_outcome: ContextVar[str] = ContextVar(
+    "research_strategy_success_outcome", default="success"
+)
 
 STRATEGY_OPERATIONS = Counter(
     "atlas_research_strategy_operations_total",
@@ -40,6 +44,11 @@ def metric_outcome(exc: Exception) -> str:
     return "failure"
 
 
+def set_strategy_success_outcome(outcome: str) -> None:
+    """Set the bounded outcome for the current strategy-operation context."""
+    _strategy_success_outcome.set(outcome)
+
+
 def track_strategy(
     operation: str,
 ) -> Callable[[Callable[P, Coroutine[Any, Any, R]]], Callable[P, Coroutine[Any, Any, R]]]:
@@ -48,13 +57,19 @@ def track_strategy(
     ) -> Callable[P, Coroutine[Any, Any, R]]:
         @wraps(function)
         async def wrapped(*args: P.args, **kwargs: P.kwargs) -> R:
+            token = _strategy_success_outcome.set("success")
             try:
                 value = await function(*args, **kwargs)
             except Exception as exc:
                 STRATEGY_OPERATIONS.labels(operation=operation, outcome=metric_outcome(exc)).inc()
                 raise
-            STRATEGY_OPERATIONS.labels(operation=operation, outcome="success").inc()
-            return value
+            else:
+                STRATEGY_OPERATIONS.labels(
+                    operation=operation, outcome=_strategy_success_outcome.get()
+                ).inc()
+                return value
+            finally:
+                _strategy_success_outcome.reset(token)
 
         return wrapped
 

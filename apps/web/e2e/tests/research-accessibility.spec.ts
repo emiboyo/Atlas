@@ -80,3 +80,10 @@ test("version validation summary receives real browser focus", async ({ page }) 
   await page.getByRole("button", { name: /save immutable version/i }).press("Space");
   await expect(page.getByText(/short window must be less/i)).toBeFocused();
 });
+
+test("axe negative control detects an unnamed button and unlabelled input", async ({ page }) => {
+  await page.setContent("<main><button></button><input /></main>");
+  const ruleIds = (await new AxeBuilder({ page }).analyze()).violations.map(({ id }) => id);
+  expect(ruleIds).toContain("button-name");
+  expect(ruleIds).toContain("label");
+});
