@@ -31,6 +31,24 @@ type Permissions = {
   can_explain: boolean;
   can_read_audit: boolean;
 };
+const deniedPermissions: Permissions = {
+  can_read: false,
+  can_update: false,
+  can_archive: false,
+  can_create_version: false,
+  can_create_backtest: false,
+  can_compare: false,
+  can_explain: false,
+  can_read_audit: false,
+};
+
+function normalizePermissions(value: unknown): Permissions {
+  if (!value || typeof value !== "object") return deniedPermissions;
+  const candidate = value as Record<keyof Permissions, unknown>;
+  const keys = Object.keys(deniedPermissions) as (keyof Permissions)[];
+  if (keys.some((key) => typeof candidate[key] !== "boolean")) return deniedPermissions;
+  return Object.fromEntries(keys.map((key) => [key, candidate[key]])) as Permissions;
+}
 type Strategy = {
   id: string;
   tenant_id: string;
@@ -271,7 +289,7 @@ function ResearchData({
           atlasApi<Permissions>(`/research/strategies/${strategyId}/effective-permissions`, auth),
         ]);
         setData(strategy);
-        setPermissions(allowed);
+        setPermissions(normalizePermissions(allowed));
       } else if ((view === "versions" || view === "new-version") && strategyId) {
         const [strategy, versions, allowed] = await Promise.all([
           atlasApi<Strategy>(`/research/strategies/${strategyId}`, auth),
@@ -279,7 +297,7 @@ function ResearchData({
           atlasApi<Permissions>(`/research/strategies/${strategyId}/effective-permissions`, auth),
         ]);
         setData({ strategy, versions });
-        setPermissions(allowed);
+        setPermissions(normalizePermissions(allowed));
       } else if (view === "runs" || view === "new-run" || view === "compare") {
         const orgs = await organisations();
         const tenant = orgs.items[0];
@@ -302,7 +320,7 @@ function ResearchData({
           `/research/strategies/${run.strategy_id}/effective-permissions`,
           auth,
         );
-        setPermissions(allowed);
+        setPermissions(normalizePermissions(allowed));
         if (view === "run") {
           const result =
             run.status === "completed"
@@ -797,6 +815,7 @@ function BacktestForm({
   announce: (value: string) => void;
 }) {
   const [versions, setVersions] = useState<Version[]>([]);
+  const [canCreate, setCanCreate] = useState(false);
   const { getToken } = useAuth();
   if (!data.tenant) return null;
   return (
@@ -847,14 +866,21 @@ function BacktestForm({
             onChange={(event) => {
               const selected = event.target.value;
               setVersions([]);
+              setCanCreate(false);
               if (!selected) return;
               void (async () => {
                 try {
                   const auth = await getToken();
                   if (!auth) throw new Error("Authentication is required.");
-                  setVersions(
-                    await atlasApi<Version[]>(`/research/strategies/${selected}/versions`, auth),
-                  );
+                  const [availableVersions, effective] = await Promise.all([
+                    atlasApi<Version[]>(`/research/strategies/${selected}/versions`, auth),
+                    atlasApi<unknown>(
+                      `/research/strategies/${selected}/effective-permissions`,
+                      auth,
+                    ),
+                  ]);
+                  setVersions(availableVersions);
+                  setCanCreate(normalizePermissions(effective).can_create_backtest);
                 } catch (error) {
                   announce(messageFor(error));
                 }
@@ -968,7 +994,7 @@ function BacktestForm({
         </label>
       </fieldset>
       <button
-        disabled={busy || !data.strategies.length}
+        disabled={busy || !data.strategies.length || !canCreate}
         className="mt-6 rounded-xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950"
       >
         {busy ? "Submitting…" : "Run historical simulation"}
@@ -1027,7 +1053,8 @@ function EventTable({ events }: { events: Event[] }) {
             <th>Listing</th>
             <th>Price / quantity</th>
             <th>Fees / slippage</th>
-            <th>Cash / position after</th>
+            <th>Cash before / after</th>
+            <th>Position before / after</th>
             <th>Rules</th>
           </tr>
         </thead>
@@ -1047,14 +1074,17 @@ function EventTable({ events }: { events: Event[] }) {
                   {event.fee} / {event.slippage}
                 </td>
                 <td>
-                  {event.cash_after} / {event.position_after}
+                  {event.cash_before} / {event.cash_after}
+                </td>
+                <td>
+                  {event.position_before} / {event.position_after}
                 </td>
                 <td>{event.triggered_rule_ids.join(", ")}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={9} className="py-6 text-slate-400">
+              <td colSpan={10} className="py-6 text-slate-400">
                 No simulated events occurred.
               </td>
             </tr>

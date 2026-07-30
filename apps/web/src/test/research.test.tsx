@@ -163,6 +163,20 @@ describe("historical strategy research experience", () => {
     );
   });
 
+  it("fails closed when effective permissions are malformed", async () => {
+    vi.mocked(fetch).mockImplementation((input) => {
+      const path = requestUrl(input);
+      if (path.includes("/effective-permissions"))
+        return response({ ...permissions, can_archive: "true" });
+      if (path.endsWith(`/strategies/${strategy.id}`)) return response(strategy);
+      return response({ code: "not_found", message: "Not found" }, 404);
+    });
+    render(<ResearchScreen view="overview" strategyId={strategy.id} />);
+    expect(await screen.findByRole("heading", { name: strategy.name })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /archive strategy/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /create immutable version/i })).toBeNull();
+  });
+
   it.each([
     [401, "Your session has expired"],
     [403, "do not have permission"],
