@@ -2,14 +2,14 @@
 
 ## 1–7. Audit identity
 
-| Field | Value |
-| --- | --- |
-| Date | 2026-07-30 |
-| Repository | `C:\Dev\Atlas` |
-| Branch | `chore/milestone-5-frontend-reaudit` |
-| Commit audited | `76fd978295e48ac1de25243f04313749156d5585` |
-| Remediation commits | `e82002e`, `b44d0b5`, merge `76fd978` |
-| Auditor role | Independent frontend, Next.js, API-integration, accessibility, authentication, and release-gate reviewer |
+| Field               | Value                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| Date                | 2026-07-30                                                                                               |
+| Repository          | `C:\Dev\Atlas`                                                                                           |
+| Branch              | `chore/milestone-5-frontend-reaudit`                                                                     |
+| Commit audited      | `76fd978295e48ac1de25243f04313749156d5585`                                                               |
+| Remediation commits | `e82002e`, `b44d0b5`, merge `76fd978`                                                                    |
+| Auditor role        | Independent frontend, Next.js, API-integration, accessibility, authentication, and release-gate reviewer |
 
 ## 8–9. Executive conclusion and final status
 
@@ -60,47 +60,47 @@ request and mutation flows.
 
 ## 13. Claim-to-evidence matrix
 
-| Claim | Independent evidence | Conclusion |
-| --- | --- | --- |
-| Intended routes exist | Source tree, Next.js production manifest, HTTP checks | Supported |
-| No placeholder research links | Full web-source search and focused DOM test | Supported; homepage fragment links are legitimate in-page anchors |
-| No active dead research control | Handler/form inventory and tests | Supported after correction |
-| Strategy workflows API-backed | GET/POST/PATCH/archive requests match OpenAPI | Supported |
-| Version workflows API-backed | List/create endpoints, typed form, idempotency | Supported |
-| Run workflows API-backed | List/create/detail and returned-UUID redirect | Supported |
-| Events/analytics/explanations/audit API-backed | Existing FastAPI endpoints verified from live OpenAPI | Supported |
-| Comparison API-backed | Completed-run selection and compare POST | Supported |
-| Dynamic UUID navigation | Route params and server-returned IDs used | Supported |
-| Permissions server-derived | Effective-permissions endpoint and runtime normalization | Supported after correction |
-| Safe auth/error/empty states | Code, stable API client, synthetic tests, unauthenticated Docker routes | Supported with E2E limitation |
-| Unsupported missing policies absent | UI contains only disabled `fail_run`; test passes | Supported |
-| Accessibility improved | Semantic controls/tables/live region/focus test | Supported at development level |
-| 39 package tests | Independent final run: 40 tests | Claim superseded upward |
-| All native gates | Executed independently | Passed |
-| Docker Clerk wiring | Initially absent; correction and Docker rebuild verified | Resolved |
+| Claim                                          | Independent evidence                                                    | Conclusion                                                        |
+| ---------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Intended routes exist                          | Source tree, Next.js production manifest, HTTP checks                   | Supported                                                         |
+| No placeholder research links                  | Full web-source search and focused DOM test                             | Supported; homepage fragment links are legitimate in-page anchors |
+| No active dead research control                | Handler/form inventory and tests                                        | Supported after correction                                        |
+| Strategy workflows API-backed                  | GET/POST/PATCH/archive requests match OpenAPI                           | Supported                                                         |
+| Version workflows API-backed                   | List/create endpoints, typed form, idempotency                          | Supported                                                         |
+| Run workflows API-backed                       | List/create/detail and returned-UUID redirect                           | Supported                                                         |
+| Events/analytics/explanations/audit API-backed | Existing FastAPI endpoints verified from live OpenAPI                   | Supported                                                         |
+| Comparison API-backed                          | Completed-run selection and compare POST                                | Supported                                                         |
+| Dynamic UUID navigation                        | Route params and server-returned IDs used                               | Supported                                                         |
+| Permissions server-derived                     | Effective-permissions endpoint and runtime normalization                | Supported after correction                                        |
+| Safe auth/error/empty states                   | Code, stable API client, synthetic tests, unauthenticated Docker routes | Supported with E2E limitation                                     |
+| Unsupported missing policies absent            | UI contains only disabled `fail_run`; test passes                       | Supported                                                         |
+| Accessibility improved                         | Semantic controls/tables/live region/focus test                         | Supported at development level                                    |
+| 39 package tests                               | Independent final run: 40 tests                                         | Claim superseded upward                                           |
+| All native gates                               | Executed independently                                                  | Passed                                                            |
+| Docker Clerk wiring                            | Initially absent; correction and Docker rebuild verified                | Resolved                                                          |
 
 ## 14. Route inventory
 
-| Route | Source type | Authentication/API/state conclusion |
-| --- | --- | --- |
-| `/` | Static page | Public, no research API |
-| `/sign-in`, `/sign-up` | Clerk catch-all dynamic routes | Safe configured/unconfigured Clerk state |
-| `/app` | Protected app page | Server auth boundary |
-| `/app/portfolios` | Protected page | Outside focused workflow |
-| `/app/research` | Protected static navigation | Valid research destinations and disclaimer |
-| `/app/research/strategies` | Protected client workflow | Organisations and tenant-filtered strategies; loading/empty/error |
-| `/app/research/strategies/new` | Protected client form | Organisation resolution and authorised POST |
-| `/app/research/strategies/[strategyId]` | Dynamic | Uses supplied ID for strategy and permissions; denied/missing/error states |
-| `/app/research/strategies/[strategyId]/versions` | Dynamic | Uses supplied ID for strategy, versions, and permissions |
-| `/app/research/strategies/[strategyId]/versions/new` | Dynamic | Uses supplied ID for typed version POST |
-| `/app/research/backtests` | Protected client workflow | Tenant run GET and dynamic run links |
-| `/app/research/backtests/new` | Protected client form | Strategy/version resolution, permissions, genuine run POST |
-| `/app/research/backtests/[runId]` | Dynamic | Uses supplied run ID; result loaded only when complete |
-| `/app/research/backtests/[runId]/events` | Dynamic | API event sequence and empty/error state |
-| `/app/research/backtests/[runId]/analytics` | Dynamic | Result/equity/quality API requests and text table |
-| `/app/research/backtests/[runId]/explanations` | Dynamic | List/generate, disabled/denied/empty/error |
-| `/app/research/backtests/[runId]/audit` | Dynamic | Permission-restricted append-only API history |
-| `/app/research/compare` | Protected client workflow | Completed-run selection and genuine comparison POST |
+| Route                                                | Source type                    | Authentication/API/state conclusion                                        |
+| ---------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------- |
+| `/`                                                  | Static page                    | Public, no research API                                                    |
+| `/sign-in`, `/sign-up`                               | Clerk catch-all dynamic routes | Safe configured/unconfigured Clerk state                                   |
+| `/app`                                               | Protected app page             | Server auth boundary                                                       |
+| `/app/portfolios`                                    | Protected page                 | Outside focused workflow                                                   |
+| `/app/research`                                      | Protected static navigation    | Valid research destinations and disclaimer                                 |
+| `/app/research/strategies`                           | Protected client workflow      | Organisations and tenant-filtered strategies; loading/empty/error          |
+| `/app/research/strategies/new`                       | Protected client form          | Organisation resolution and authorised POST                                |
+| `/app/research/strategies/[strategyId]`              | Dynamic                        | Uses supplied ID for strategy and permissions; denied/missing/error states |
+| `/app/research/strategies/[strategyId]/versions`     | Dynamic                        | Uses supplied ID for strategy, versions, and permissions                   |
+| `/app/research/strategies/[strategyId]/versions/new` | Dynamic                        | Uses supplied ID for typed version POST                                    |
+| `/app/research/backtests`                            | Protected client workflow      | Tenant run GET and dynamic run links                                       |
+| `/app/research/backtests/new`                        | Protected client form          | Strategy/version resolution, permissions, genuine run POST                 |
+| `/app/research/backtests/[runId]`                    | Dynamic                        | Uses supplied run ID; result loaded only when complete                     |
+| `/app/research/backtests/[runId]/events`             | Dynamic                        | API event sequence and empty/error state                                   |
+| `/app/research/backtests/[runId]/analytics`          | Dynamic                        | Result/equity/quality API requests and text table                          |
+| `/app/research/backtests/[runId]/explanations`       | Dynamic                        | List/generate, disabled/denied/empty/error                                 |
+| `/app/research/backtests/[runId]/audit`              | Dynamic                        | Permission-restricted append-only API history                              |
+| `/app/research/compare`                              | Protected client workflow      | Completed-run selection and genuine comparison POST                        |
 
 All routes were present in the production route manifest. Representative
 unauthenticated requests returned safe HTML rather than a route 404.
@@ -348,12 +348,12 @@ offers only `fail_run` and does not expose backend `skip_event` or
 
 ## 40. Corrective changes
 
-| ID | Finding and correction | Evidence | Status |
-| --- | --- | --- | --- |
-| M5-FR-COR-001 | Malformed truthy effective-permission fields could render controls. Added exact runtime boolean normalization with all-denied fallback. | New malformed-permission regression; 40-test suite | Resolved |
-| M5-FR-COR-002 | Run creation did not consume `can_create_backtest`. Fetch selected strategy permissions and disable unless exactly true. | Code/contract inspection; full gates | Resolved |
-| M5-FR-COR-003 | Strategy creation could double-submit and event table omitted before-state evidence. Added busy guard and cash/position before/after columns. | Code review, lint/type/build/tests | Resolved |
-| M5-FR-COR-004 | Docker did not wire Clerk keys. Added publishable build argument and runtime-only secret environment variable. | Clean Docker rebuild; zero browser secret markers | Resolved |
+| ID            | Finding and correction                                                                                                                        | Evidence                                           | Status   |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | -------- |
+| M5-FR-COR-001 | Malformed truthy effective-permission fields could render controls. Added exact runtime boolean normalization with all-denied fallback.       | New malformed-permission regression; 40-test suite | Resolved |
+| M5-FR-COR-002 | Run creation did not consume `can_create_backtest`. Fetch selected strategy permissions and disable unless exactly true.                      | Code/contract inspection; full gates               | Resolved |
+| M5-FR-COR-003 | Strategy creation could double-submit and event table omitted before-state evidence. Added busy guard and cash/position before/after columns. | Code review, lint/type/build/tests                 | Resolved |
+| M5-FR-COR-004 | Docker did not wire Clerk keys. Added publishable build argument and runtime-only secret environment variable.                                | Clean Docker rebuild; zero browser secret markers  | Resolved |
 
 Files changed by re-audit corrections:
 
@@ -368,13 +368,13 @@ No backend, migration, financial, governance, or historical report changed.
 
 ## 41. Remaining limitations and findings
 
-| ID | Severity | Finding | Status |
-| --- | --- | --- | --- |
-| M5-FR-001 | Medium | No tenant-level effective-permissions endpoint exists to pre-hide strategy creation for viewers; server POST denies safely | Accepted development limitation |
-| M5-FR-002 | Medium | No authenticated browser E2E/assistive-technology evidence | Accepted development limitation |
-| M5-FR-003 | Medium | Backtest list/create/compare auto-select the first organisation rather than exposing organisation switching | Open private-development limitation |
-| M5-FR-004 | Low | Non-permission successful API bodies rely on FastAPI's internal response contract rather than client runtime schemas | Accepted development limitation |
-| M5-FR-005 | Low | Mutation-specific 409/422 UI tests are not comprehensive | Accepted development limitation |
+| ID        | Severity | Finding                                                                                                                    | Status                              |
+| --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| M5-FR-001 | Medium   | No tenant-level effective-permissions endpoint exists to pre-hide strategy creation for viewers; server POST denies safely | Accepted development limitation     |
+| M5-FR-002 | Medium   | No authenticated browser E2E/assistive-technology evidence                                                                 | Accepted development limitation     |
+| M5-FR-003 | Medium   | Backtest list/create/compare auto-select the first organisation rather than exposing organisation switching                | Open private-development limitation |
+| M5-FR-004 | Low      | Non-permission successful API bodies rely on FastAPI's internal response contract rather than client runtime schemas       | Accepted development limitation     |
+| M5-FR-005 | Low      | Mutation-specific 409/422 UI tests are not comprehensive                                                                   | Accepted development limitation     |
 
 No unresolved Critical or High frontend finding remains.
 
