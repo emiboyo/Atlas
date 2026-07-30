@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from prometheus_client import generate_latest
 from pydantic import ValidationError
 
 from apps.api.src.research.engine import (
@@ -95,6 +96,68 @@ def test_strict_research_schemas_and_bounds() -> None:
             research_purpose="Historical only",
             status="active",  # type: ignore[call-arg]
         )
+
+
+@pytest.mark.parametrize("policy", ["skip_event", "skip_observation", "arbitrary"])
+def test_unsupported_missing_data_policies_fail_validation(policy: str) -> None:
+    with pytest.raises(ValidationError):
+        BacktestCreate(
+            strategy_id=uuid4(),
+            strategy_version_id=uuid4(),
+            start_date=date(2026, 2, 1),
+            end_date=date(2026, 2, 2),
+            starting_capital=Decimal("100"),
+            fee_model="zero_fee",
+            slippage_model="zero_slippage",
+            execution_policy="next_open",
+            sizing_policy="fixed_quantity",
+            sizing_value=Decimal("1"),
+            missing_data_policy=policy,  # type: ignore[arg-type]
+        )
+
+
+def test_safe_missing_data_policy_is_the_only_default() -> None:
+    value = BacktestCreate(
+        strategy_id=uuid4(),
+        strategy_version_id=uuid4(),
+        start_date=date(2026, 2, 1),
+        end_date=date(2026, 2, 2),
+        starting_capital=Decimal("100"),
+        fee_model="zero_fee",
+        slippage_model="zero_slippage",
+        execution_policy="next_open",
+        sizing_policy="fixed_quantity",
+        sizing_value=Decimal("1"),
+    )
+    assert value.missing_data_policy == "fail_run"
+
+
+def test_research_metrics_have_only_bounded_labels_and_documented_buckets() -> None:
+    from apps.api.src.research.metrics import (
+        BACKTEST_DURATION,
+        BACKTESTS,
+        DATA_QUALITY,
+        EXPLANATIONS,
+        RESEARCH_CONFLICTS,
+        STRATEGY_OPERATIONS,
+    )
+
+    assert STRATEGY_OPERATIONS._labelnames == ("operation", "outcome")
+    assert BACKTESTS._labelnames == ("outcome",)
+    assert DATA_QUALITY._labelnames == ("outcome",)
+    assert EXPLANATIONS._labelnames == ("outcome",)
+    assert RESEARCH_CONFLICTS._labelnames == ("operation",)
+    assert BACKTEST_DURATION._labelnames == ()
+    exposed = generate_latest().decode()
+    for name in (
+        "atlas_research_strategy_operations",
+        "atlas_research_backtests",
+        "atlas_research_backtest_duration_seconds",
+        "atlas_research_conflicts",
+        "atlas_research_explanations",
+        "atlas_research_data_quality",
+    ):
+        assert name in exposed
     with pytest.raises(ValidationError):
         BacktestCreate(
             strategy_id=uuid4(),

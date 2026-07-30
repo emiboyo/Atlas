@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import axe from "axe-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ResearchPage from "@/app/app/research/page";
 import { ResearchScreen } from "@/components/research-screen";
@@ -260,5 +261,45 @@ describe("historical strategy research experience", () => {
       `/app/research/backtests/${run.id}/events`,
     );
     expect(document.querySelector('button[type="button"]:not([disabled])')).toBeNull();
+  });
+
+  it.each([
+    ["overview", strategy.id, undefined],
+    ["versions", strategy.id, undefined],
+    ["new-version", strategy.id, undefined],
+    ["runs", undefined, undefined],
+    ["new-run", undefined, undefined],
+    ["run", undefined, run.id],
+    ["events", undefined, run.id],
+    ["analytics", undefined, run.id],
+    ["explanations", undefined, run.id],
+    ["audit", undefined, run.id],
+    ["compare", undefined, undefined],
+  ] as const)(
+    "has no serious or critical automated accessibility violations in %s",
+    async (view, strategyId, runId) => {
+      const { container } = render(
+        <ResearchScreen view={view} strategyId={strategyId} runId={runId} />,
+      );
+      await waitFor(() => expect(fetch).toHaveBeenCalled());
+      const scan = await axe.run(container, {
+        runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] },
+        rules: { "color-contrast": { enabled: false } },
+      });
+      expect(
+        scan.violations.filter(({ impact }) => impact === "serious" || impact === "critical"),
+      ).toEqual([]);
+    },
+  );
+
+  it("has no serious or critical automated accessibility violations on the research landing page", async () => {
+    const { container } = render(<ResearchPage />);
+    const scan = await axe.run(container, {
+      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] },
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(
+      scan.violations.filter(({ impact }) => impact === "serious" || impact === "critical"),
+    ).toEqual([]);
   });
 });
