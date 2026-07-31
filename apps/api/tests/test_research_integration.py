@@ -532,6 +532,301 @@ async def test_version_explanation_and_mutation_faults_roll_back(
     await engine.dispose()
 
 
+@pytest.mark.parametrize("run_boundary", ["after_run_flush", "final_commit"])
+async def test_idempotency_keys_remain_reusable_after_transactional_faults(
+    monkeypatch: pytest.MonkeyPatch, run_boundary: str
+) -> None:
+    engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    owner, strategy, version, run_data = await create_concurrency_subject(
+        factory, label="Retry after transactional fault"
+    )
+
+    version_data = VersionCreate(
+        version_label="Retryable version",
+        base_currency="GBP",
+        listing_id=UUID(cast(str, version.configuration["listing_id"])),
+        rules=[
+            ResearchRule(
+                id="retry-cross",
+                rule_type="sma_crossover",
+                short_window=2,
+                long_window=3,
+            )
+        ],
+    )
+    version_key = f"retry-version-{uuid4()}"
+    async with factory() as session:
+        service = ResearchService()
+
+        async def fail_version_commit(_session: AsyncSession) -> None:
+            raise RuntimeError("version transaction fault")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(service, "_commit", fail_version_commit)
+            with pytest.raises(RuntimeError, match="version transaction fault"):
+                await service.create_version(
+                    session,
+                    owner,
+                    strategy.id,
+                    version_data,
+                    version_key,
+                    "retry-evidence",
+                )
+        await session.rollback()
+
+    async with factory() as verification:
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(ResearchStrategyVersion)
+                .where(ResearchStrategyVersion.idempotency_key == version_key)
+            )
+            == 0
+        )
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(ResearchAuditEvent)
+                .where(ResearchAuditEvent.operation_id == version_key)
+            )
+            == 0
+        )
+
+    async with factory() as session:
+        retried_version = await ResearchService().create_version(
+            session,
+            owner,
+            strategy.id,
+            version_data,
+            version_key,
+            "retry-evidence",
+        )
+    async with factory() as session:
+        replayed_version = await ResearchService().create_version(
+            session,
+            owner,
+            strategy.id,
+            version_data,
+            version_key,
+            "retry-evidence",
+        )
+        assert replayed_version.id == retried_version.id
+        with pytest.raises(ApplicationError) as version_conflict:
+            await ResearchService().create_version(
+                session,
+                owner,
+                strategy.id,
+                version_data.model_copy(update={"version_label": "Conflicting version"}),
+                version_key,
+                "retry-evidence",
+            )
+        assert version_conflict.value.code == "idempotency_conflict"
+        await session.rollback()
+
+    run_key = f"retry-run-{uuid4()}"
+    retry_run_data = run_data.model_copy(update={"strategy_version_id": retried_version.id})
+    async with factory() as session:
+        service = ResearchService()
+        original_flush = session.flush
+
+        async def fail_run_commit(_session: AsyncSession) -> None:
+            raise RuntimeError("run transaction fault")
+
+        async def fail_after_run_flush(*args: object, **kwargs: object) -> None:
+            await original_flush(*args, **kwargs)
+            raise RuntimeError("run transaction fault")
+
+        with monkeypatch.context() as patch:
+            if run_boundary == "after_run_flush":
+                patch.setattr(session, "flush", fail_after_run_flush)
+            else:
+                patch.setattr(service, "_commit", fail_run_commit)
+            with pytest.raises(RuntimeError, match="run transaction fault"):
+                await service.create_run(
+                    session,
+                    owner,
+                    retry_run_data,
+                    run_key,
+                    "retry-evidence",
+                )
+        await session.rollback()
+
+    async with factory() as verification:
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(BacktestRun)
+                .where(BacktestRun.idempotency_key == run_key)
+            )
+            == 0
+        )
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(ResearchAuditEvent)
+                .where(ResearchAuditEvent.operation_id == run_key)
+            )
+            == 0
+        )
+
+    async with factory() as session:
+        retried_run = await ResearchService().create_run(
+            session,
+            owner,
+            retry_run_data,
+            run_key,
+            "retry-evidence",
+        )
+    async with factory() as session:
+        replayed_run = await ResearchService().create_run(
+            session,
+            owner,
+            retry_run_data,
+            run_key,
+            "retry-evidence",
+        )
+        assert replayed_run.id == retried_run.id
+        with pytest.raises(ApplicationError) as run_conflict:
+            await ResearchService().create_run(
+                session,
+                owner,
+                retry_run_data.model_copy(update={"starting_capital": Decimal("20000")}),
+                run_key,
+                "retry-evidence",
+            )
+        assert run_conflict.value.code == "idempotency_conflict"
+        await session.rollback()
+
+    explanation_key = f"retry-explanation-{uuid4()}"
+    explanation_data = ExplanationCreate(explanation_type="run_summary")
+    async with factory() as session:
+        service = ResearchService()
+
+        async def fail_explanation_commit(_session: AsyncSession) -> None:
+            raise RuntimeError("explanation transaction fault")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(service, "_commit", fail_explanation_commit)
+            with pytest.raises(RuntimeError, match="explanation transaction fault"):
+                await service.explain(
+                    session,
+                    owner,
+                    retried_run.id,
+                    explanation_data,
+                    explanation_key,
+                    "retry-evidence",
+                )
+        await session.rollback()
+
+    async with factory() as verification:
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(BacktestExplanation)
+                .where(BacktestExplanation.idempotency_key == explanation_key)
+            )
+            == 0
+        )
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(ResearchAuditEvent)
+                .where(ResearchAuditEvent.operation_id == explanation_key)
+            )
+            == 0
+        )
+
+    async with factory() as session:
+        retried_explanation = await ResearchService().explain(
+            session,
+            owner,
+            retried_run.id,
+            explanation_data,
+            explanation_key,
+            "retry-evidence",
+        )
+    async with factory() as session:
+        replayed_explanation = await ResearchService().explain(
+            session,
+            owner,
+            retried_run.id,
+            explanation_data,
+            explanation_key,
+            "retry-evidence",
+        )
+        assert replayed_explanation.id == retried_explanation.id
+        with pytest.raises(ApplicationError) as explanation_conflict:
+            await ResearchService().explain(
+                session,
+                owner,
+                retried_run.id,
+                ExplanationCreate(explanation_type="data_quality_explanation"),
+                explanation_key,
+                "retry-evidence",
+            )
+        assert explanation_conflict.value.code == "idempotency_conflict"
+        await session.rollback()
+
+    async with factory() as verification:
+        for model, key, expected_audits in (
+            (ResearchStrategyVersion, version_key, 1),
+            (BacktestRun, run_key, 3),
+            (BacktestExplanation, explanation_key, 1),
+        ):
+            assert (
+                await verification.scalar(
+                    select(func.count()).select_from(model).where(model.idempotency_key == key)
+                )
+                == 1
+            )
+            assert (
+                await verification.scalar(
+                    select(func.count())
+                    .select_from(ResearchAuditEvent)
+                    .where(ResearchAuditEvent.operation_id == key)
+                )
+                == expected_audits
+            )
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(ResearchStrategyVersion)
+                .where(
+                    ResearchStrategyVersion.strategy_id == strategy.id,
+                    ResearchStrategyVersion.version_number == retried_version.version_number,
+                )
+            )
+            == 1
+        )
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(BacktestResult)
+                .where(BacktestResult.run_id == retried_run.id)
+            )
+            == 1
+        )
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(BacktestEvent)
+                .where(BacktestEvent.run_id == retried_run.id)
+            )
+            > 0
+        )
+        assert (
+            await verification.scalar(
+                select(func.count())
+                .select_from(BacktestEquityPoint)
+                .where(BacktestEquityPoint.run_id == retried_run.id)
+            )
+            > 0
+        )
+        assert await verification.scalar(text("SELECT 1")) == 1
+    await engine.dispose()
+
+
 async def test_concurrent_version_and_run_idempotency_create_one_effect() -> None:
     engine = create_async_engine(os.environ["ATLAS_TEST_DATABASE_URL"])
     factory = async_sessionmaker(engine, expire_on_commit=False)
