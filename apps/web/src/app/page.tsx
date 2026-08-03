@@ -15,6 +15,8 @@ import {
   Waypoints,
 } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Button } from "@atlas/ui/button";
 import { Card } from "@atlas/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -37,8 +39,8 @@ const features = [
   },
   {
     icon: Globe2,
-    title: "Access without borders",
-    description: "A global platform designed to make investing accessible from just $10.",
+    title: "Research without ambiguity",
+    description: "Explore strategies using transparent historical simulations.",
   },
 ];
 
@@ -87,11 +89,20 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button size="sm" className="hidden sm:inline-flex" asChild>
-              <a href="#features">
-                Explore Atlas <ArrowRight className="size-4" />
-              </a>
-            </Button>
+            <SignedOut>
+              <Button size="sm" variant="ghost" asChild>
+                <Link href={"/sign-in" as Route}>Sign in</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href={"/sign-up" as Route}>Get started</Link>
+              </Button>
+            </SignedOut>
+            <SignedIn>
+              <Button size="sm" asChild>
+                <Link href="/app">Open dashboard</Link>
+              </Button>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
           </div>
         </nav>
       </header>
@@ -112,19 +123,32 @@ export default function HomePage() {
               The Intelligent Investment <span className="text-primary">Operating System.</span>
             </h1>
             <p className="text-muted-foreground mt-7 max-w-2xl text-balance text-lg leading-8">
-              Atlas brings your financial world into one clear, connected system—built to help
-              anyone invest with confidence, from their first $10 onward.
+              Explore strategies using transparent historical simulations in one clear, connected
+              research system.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild>
-                <a href="#features">
-                  Explore Atlas <ArrowRight className="size-4" />
-                </a>
-              </Button>
+              <SignedOut>
+                <Button size="lg" asChild>
+                  <Link href={"/sign-up" as Route}>
+                    Create account <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              </SignedOut>
+              <SignedIn>
+                <Button size="lg" asChild>
+                  <Link href="/app">
+                    Open Atlas dashboard <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              </SignedIn>
               <Button size="lg" variant="outline" asChild>
                 <a href="#architecture">Explore the platform</a>
               </Button>
             </div>
+            <p className="text-muted-foreground mt-5 max-w-2xl text-sm leading-6">
+              Historical simulation only — not investment advice and not a guarantee of future
+              performance.
+            </p>
             <div className="text-muted-foreground mt-9 flex flex-wrap gap-x-6 gap-y-3 text-sm">
               {["Global by design", "Security first", "Built for clarity"].map((item) => (
                 <span className="flex items-center gap-2" key={item}>
@@ -183,8 +207,8 @@ export default function HomePage() {
                     <p className="text-muted-foreground text-xs">market</p>
                   </div>
                   <div>
-                    <p className="text-lg font-semibold">$10</p>
-                    <p className="text-muted-foreground text-xs">to begin</p>
+                    <p className="text-lg font-semibold">Clear</p>
+                    <p className="text-muted-foreground text-xs">evidence</p>
                   </div>
                 </div>
               </div>
