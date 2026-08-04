@@ -58,18 +58,23 @@ resilience exercise.
 
 Implementation remains prohibited until all conditions are satisfied:
 
-1. The risk owner explicitly selects the scope and signs the authorisation ADR.
-2. Independent reviewers accept the scope, threat model, risk register, data
-   classification, telemetry schema, rollback design, and test plan.
-3. ADR 0018 remains the unique proposal record without rewriting accepted
+1. Closure evidence and separate proposed exception decisions are prepared
+   without accepting risk.
+2. Independent reviewers assess the scope, threat model, risk register, data
+   classification, telemetry schema, rollback design, test plan, proposed
+   exceptions, and Clerk attestation limitation.
+3. The risk owner then records decisions, signs any accepted exceptions and the
+   Clerk attestation, explicitly selects the scope, and signs the authorisation ADR.
+4. Implementation begins only after final approval and every condition is met.
+5. ADR 0018 remains the unique proposal record without rewriting accepted
    history.
-4. Existing security exceptions are fixed or explicitly extended to this exact
+6. Existing security exceptions are fixed or explicitly extended to this exact
    scope with current evidence and dates.
-5. Exact artifact-signing key ownership and non-production secret handling are
+7. Exact artifact-signing key ownership and non-production secret handling are
    approved.
-6. Work is decomposed into reviewable changes; application behaviour remains
+8. Work is decomposed into reviewable changes; application behaviour remains
    disabled by default until its focused evidence passes.
-7. No legal/regulatory reviewer identifies a need for review that has not been
+9. No legal/regulatory reviewer identifies a need for review that has not been
    completed.
 
 ## Authentication, authorisation, and tenancy
@@ -125,18 +130,24 @@ environment classification, and completeness/limitations.
 
 ## Existing security-exception decision required
 
-Neither exception currently authorises Milestone 6A. Before authorisation, each
-must be fixed or explicitly extended in a signed, current decision:
+No existing decision authorises Milestone 6A. Five separate current proposals
+are documented in `docs/milestone-6a-security-exception-proposals.md`; all are
+**PROPOSED — NOT ACCEPTED**:
 
-| Advisory                             | Affected component and current reachability                                                                                                                                                                                          | Required controls and decision data                                                                                                                                                                                                                                                                              |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GHSA-mh99-v99m-4gvg / CVE-2026-14257 | `brace-expansion` through the ESLint/minimatch development toolchain; governed audit on 2026-08-03 still reports it; not in the web/API runtime and exploitability requires untrusted brace patterns to reach lint tooling           | Prohibit untrusted patterns and production use; keep ESLint out of runtime; dependency audit; owner Adebayo Olaegbe; proposed review 2026-08-17; no later than 2026-10-27; stop if runtime-reachable, untrusted input reaches it, a compatible fix appears, severity increases, or deployment begins             |
-| CVE-2026-12087                       | Perl component inherited from the official Python slim image; Atlas does not invoke Perl. Current Docker Scout revalidation was blocked because Docker Desktop was not authenticated, so continued presence/fix status is unverified | Re-scan authenticated current image; prohibit Perl and production use; non-root/read-only/no-new-privileges/no host bind mounts; owner Adebayo Olaegbe; proposed review 2026-08-17; no later than 2026-10-27; stop if reachable, Perl is invoked, a fixed image exists, severity increases, or deployment begins |
+| Proposal   | Advisory                             | Current path/status                                                                                           |
+| ---------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| M6A-EX-001 | GHSA-mh99-v99m-4gvg / CVE-2026-14257 | `brace-expansion` 1.1.16 through ESLint/minimatch development tooling; no application-runtime path identified |
+| M6A-EX-002 | CVE-2026-13221                       | Perl 5.40.1-6 inherited from the Python slim base; present in authenticated remediated-image scan             |
+| M6A-EX-003 | CVE-2026-12087                       | Perl 5.40.1-6 inherited from the Python slim base; present in authenticated targeted and Critical/High scans  |
+| M6A-EX-004 | CVE-2026-48959                       | Perl 5.40.1-6 inherited from the Python slim base; present in authenticated remediated-image scan             |
+| M6A-EX-005 | CVE-2026-48962                       | Perl 5.40.1-6 inherited from the Python slim base; present in authenticated remediated-image scan             |
 
-The governed production Node audit passed, the governed development audit
-reported only the named Node advisory, and `pip-audit` reported no vulnerable
-Python packages. These checks do not resolve the container advisory or extend
-either exception.
+The remediated API image digest is
+`62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`.
+It is healthy and contains no runtime `pip`; 139 Python tests passed with
+86.01% coverage, and `pip-audit` reported no vulnerable pinned Python package.
+Scout still reports 2 Critical and 2 High findings in inherited Perl. These
+checks support review but do not resolve a finding or accept an exception.
 
 ## Clerk secret-incident closure gate
 
@@ -148,12 +159,15 @@ Local verification on 2026-08-03 established:
   image metadata or current web logs; and
 - a current secret is configured without recording its value.
 
-Local evidence cannot prove Clerk-dashboard revocation or which provider key is
-active. Before authorisation, the risk owner must attach provider-side evidence
-that both exposed development secret keys were revoked and only the rotated key
-remains active. The current image must also be scanned beyond metadata/layers as
-part of the independent secret review. Until then M6-R006 remains open and
-Milestone 6A is blocked.
+The risk owner states that both exposed Clerk Development secret keys were
+deleted and only one rotated Development secret remains active. The signed
+factual risk-owner attestation at
+`docs/evidence/milestone-6a/clerk-key-revocation-attestation.md` records the
+signed factual testimony without values, complete identifiers, publishable
+keys, or a retained screenshot. Provider state was not independently inspected.
+M6-R006 remains open with the risk-owner attestation provided and independent
+limitation review required; this does not prevent the completed evidence
+package from entering independent review.
 
 ## Evidence and test requirements
 

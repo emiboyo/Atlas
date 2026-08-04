@@ -1,0 +1,18 @@
+Atlas Milestone 6A Node advisory dependency path — redacted summary
+Date: 2026-08-03
+
+Advisory: GHSA-mh99-v99m-4gvg / CVE-2026-14257
+Affected installed package: brace-expansion 1.1.16
+Primary path: @atlas/eslint-config -> eslint 9.39.5 -> minimatch 3.1.5 -> brace-expansion 1.1.16
+Additional development paths: ESLint config/plugin chains through minimatch 3.1.5
+Reachability: development and CI lint tooling only
+Production runtime reachability: not identified
+Exploitability condition: attacker-controlled brace patterns must reach the
+affected lint/minimatch tooling
+
+Newer unrelated dependency paths use minimatch 10.2.5 and brace-expansion
+5.0.8. The current ESLint path remains on 1.1.16. No compatible, validated
+transitive upgrade or forced override was established by this audit.
+
+Conclusion: finding remains present and a narrowly scoped, explicitly signed
+Milestone 6A exception or a validated fix is required.

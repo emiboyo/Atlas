@@ -172,3 +172,22 @@ prohibitions are unchanged. The extension authorises no public access, live prov
 AI credential, real money, broker, order, execution, custody, advice, autonomous financial
 action, customer funds, or Milestone 6. Scope expires automatically without a new recorded
 decision.
+
+## Milestone 6A proposed decisions
+
+Five separate, unsigned proposals are prepared in
+[`milestone-6a-security-exception-proposals.md`](milestone-6a-security-exception-proposals.md):
+
+- M6A-EX-001: GHSA-mh99-v99m-4gvg / CVE-2026-14257.
+- M6A-EX-002: CVE-2026-13221.
+- M6A-EX-003: CVE-2026-12087.
+- M6A-EX-004: CVE-2026-48959.
+- M6A-EX-005: CVE-2026-48962.
+
+Each is **PROPOSED — NOT ACCEPTED** and limited to Milestone 6A local/CI
+operational evidence work using synthetic data only. They do not extend the
+accepted Milestone 2–5 decisions and grant no authority until independent
+review, explicit risk-owner acceptance/signature, and separate final approval
+of ADR 0018. Production, public access, tenant or financial data, external AI,
+live providers, payments, trading, execution, custody, real money, customer
+funds, and all activity outside ADR 0018 remain prohibited.

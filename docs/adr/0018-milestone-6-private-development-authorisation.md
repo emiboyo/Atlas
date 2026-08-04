@@ -123,21 +123,29 @@ the Milestone 5 boundary unchanged.
 ## Security-exception and secret-incident gates
 
 GHSA-mh99-v99m-4gvg / CVE-2026-14257 remains reported through the
-ESLint/minimatch/`brace-expansion` development chain. CVE-2026-12087 was
-previously reported in unused Perl from the official Python slim image; its
-current image status must be revalidated with authenticated Docker Scout. The
-existing decisions do not authorise Milestone 6A. Each advisory must be fixed
-or explicitly extended with affected component, reachability/exploitability,
-compensating controls, owner Adebayo Olaegbe, approved review/expiry dates, and
-immediate stop conditions.
+ESLint/minimatch/`brace-expansion` development chain. An authenticated scan of
+remediated API image digest
+`62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`
+reports CVE-2026-13221, CVE-2026-12087, CVE-2026-48959, and CVE-2026-48962
+in inherited Perl 5.40.1-6. The existing decisions do not authorise Milestone
+6A. Five separate decisions in
+`docs/milestone-6a-security-exception-proposals.md` are **PROPOSED — NOT
+ACCEPTED** pending independent review and explicit risk-owner decisions,
+signatures, review dates, and expiry dates.
 
-Two exposed Clerk development secret keys must be proven revoked through
-provider-side evidence, with only the rotated key active. Local checks confirm
-the ignored environment files are untracked, no Clerk secret pattern was found
-in scanned Git history, and the current configured secret was absent from web
-image metadata and current logs. Those local checks do not prove provider
-revocation or complete layer scanning. Authorisation remains blocked until an
-independent reviewer accepts the complete closure evidence.
+The risk owner states that both exposed Clerk Development secret keys were
+deleted, only one rotated Development secret remains active, and Atlas
+authenticated after rotation. The signed factual attestation records that
+testimony without secret values, complete identifiers, publishable keys, or a
+retained screenshot. The risk owner signed that factual attestation on
+2026-08-03. This does not accept any exception or approve this ADR. Provider
+state was not independently inspected, and an independent reviewer must assess
+that limitation before authorisation.
+
+The required sequence is: complete evidence and unsigned proposed exceptions;
+independent review; risk-owner decisions and signatures; then separate final
+approval of this ADR. Implementation may begin only after that final approval.
+Readiness for independent review is not implementation authority.
 
 ## Expiry and review
 
