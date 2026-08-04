@@ -63,8 +63,10 @@ Implementation remains prohibited until all conditions are satisfied:
 2. Independent reviewers assess the scope, threat model, risk register, data
    classification, telemetry schema, rollback design, test plan, proposed
    exceptions, and Clerk attestation limitation.
-3. The risk owner then records decisions, signs any accepted exceptions and the
-   Clerk attestation, explicitly selects the scope, and signs the authorisation ADR.
+3. The risk owner then records decisions, signs any accepted exceptions,
+   acknowledges the independent review of the signed Clerk attestation and its
+   provider-verification limitation, explicitly selects the scope, and signs the
+   authorisation ADR.
 4. Implementation begins only after final approval and every condition is met.
 5. ADR 0018 remains the unique proposal record without rewriting accepted
    history.
