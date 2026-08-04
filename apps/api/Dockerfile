@@ -6,7 +6,9 @@ WORKDIR /build
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 COPY apps/api/requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --upgrade pip \
+  && pip install -r requirements.txt \
+  && python -m pip uninstall --yes pip setuptools
 
 FROM python:3.12.13-slim AS runtime
 ENV PYTHONUNBUFFERED=1 \
