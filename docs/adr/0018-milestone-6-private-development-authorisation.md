@@ -114,8 +114,11 @@ the Milestone 5 boundary unchanged.
   concurrency, fault, rollback, replay, and recovery evidence.
 - SBOM/provenance/signature positive and tamper-negative evidence.
 - Telemetry secret/PII/cardinality review and bounded-load negative controls.
-- Python coverage at least 80%; no unresolved Critical/High finding or material
-  Medium integrity defect.
+- Python coverage at least 80%. No unremediated Critical or High finding may
+  remain unless it is covered by a separate, explicitly accepted, signed,
+  time-bounded exception with verified compensating controls, monitoring,
+  review, expiry, and immediate revocation conditions. No material Medium
+  integrity defect may remain unresolved.
 - Desktop/mobile accessibility and manual private user journey where UI changes.
 - Exact commands, totals, failures, corrections, and reruns.
 - Focused independent Milestone 6 audit.

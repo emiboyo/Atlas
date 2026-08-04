@@ -184,8 +184,10 @@ package from entering independent review.
 - OpenAPI/schema, frontend workflow, WCAG 2.2 AA, keyboard, desktop/mobile browser,
   dependency audit, container scan, Docker health, runtime smoke, and manual
   user-journey evidence.
-- No unresolved Critical or High finding and no material unresolved Medium
-  integrity defect.
+- No unremediated Critical or High finding may remain unless it is covered by a
+  separate, explicitly accepted, signed, time-bounded exception with verified
+  compensating controls, monitoring, review, expiry, and immediate revocation
+  conditions. No material Medium integrity defect may remain unresolved.
 - Full exact commands, failures, corrections, totals, and reruns recorded.
 - Independent Milestone 6 audit before technical acceptance.
 
@@ -205,9 +207,10 @@ Stop immediately if scope expands; live financial capability, public access,
 real credentials/funds, or deployment is introduced; tenant crossover becomes
 possible; database/evidence integrity cannot be enforced; deterministic
 evidence is lost; external AI becomes necessary; required legal review is
-absent; a Critical/High or material Medium integrity defect appears; Python
-coverage drops below 80%; an exception expires; secret/PII leakage is detected;
-or a production/Terraform action is attempted.
+absent; a new or materially changed Critical/High finding appears without an
+explicitly accepted, signed, in-date exception, or a material Medium integrity
+defect appears; Python coverage drops below 80%; an exception expires;
+secret/PII leakage is detected; or a production/Terraform action is attempted.
 
 ## Audit and production boundary
 
