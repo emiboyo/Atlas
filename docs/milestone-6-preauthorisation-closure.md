@@ -127,11 +127,12 @@ The targeted scan confirmed exactly one Critical CVE-2026-12087 finding in
 attacker-controlled source value. Atlas does not invoke Perl, but absence of
 current application reachability is a compensating control, not remediation.
 
-The current official base was rebuilt with `--pull --no-cache`. Atlas does not
+The current official base was rebuilt from committed Dockerfile source
+`a8db1a0f627365c94bdd605548bab0cee0e32128` with `--pull --no-cache`. Atlas does not
 install Perl; it is inherited from `python:3.12.13-slim`. Removing runtime
 `pip` and its vendored build tooling reduced a refreshed intermediate image
 from 2 Critical/4 High, 82 MB, and 186 indexed packages to 2 Critical/2 High,
-79 MB, and 170 packages at digest prefix `62cf21a8719e`. The remaining four
+79 MB, and 170 packages at current digest prefix `99a3d38d6dd9`. The remaining four
 findings are exclusively in inherited Perl 5.40.1-6. The API remained healthy,
 Alembic remained at head, all 139 tests passed against PostgreSQL with 86.01%
 coverage, and the Python dependency audit remained clean.
