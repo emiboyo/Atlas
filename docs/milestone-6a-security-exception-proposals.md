@@ -50,7 +50,7 @@ risk acceptance.
 - **Affected component/version:** Debian `perl` 5.40.1-6, inherited from the official Python slim base image. Docker Scout evidence includes files supplied through the associated `perl-base` package.
 - **Exact path:** Official `python:3.12.13-slim` runtime base -> Debian 13 Trixie base layer -> `perl-base` 5.40.1-6.
 - **Severity:** Critical.
-- **Current presence evidence:** Remediated image digest `62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`; `docker-scout-api-critical-high.txt`.
+- **Current presence evidence:** Remediated image digest `99a3d38d6dd9f8c69b9579593007f4720502b0bc1bb836cf0215b6cf4f4baabb`; `docker-scout-api-critical-high.txt`.
 - **Runtime reachability:** Atlas starts Uvicorn directly and does not invoke Perl or a Perl script.
 - **Exploitability prerequisites:** Perl execution and compilation of attacker-controlled regular-expression input containing more than 65,535 fixed-string alternation branches.
 - **Fixed-version status:** Scout reports no fixed Debian package for the selected image; it references an upstream fix after the installed version.
@@ -75,7 +75,7 @@ risk acceptance.
 - **Affected component/version:** Debian `perl` 5.40.1-6, inherited from the official Python slim base image. Docker Scout evidence includes files supplied through the associated `perl-base` package.
 - **Exact path:** Official `python:3.12.13-slim` runtime base -> Debian 13 Trixie base layer -> `perl-base` 5.40.1-6.
 - **Severity:** Critical.
-- **Current presence evidence:** Remediated image digest `62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`; `docker-scout-cve-2026-12087.txt` and `docker-scout-api-critical-high.txt`.
+- **Current presence evidence:** Remediated image digest `99a3d38d6dd9f8c69b9579593007f4720502b0bc1bb836cf0215b6cf4f4baabb`; `docker-scout-cve-2026-12087.txt` and `docker-scout-api-critical-high.txt`.
 - **Runtime reachability:** Atlas does not invoke Perl or `Socket::pack_ip_mreq_source`.
 - **Exploitability prerequisites:** A Perl script must pass an undersized attacker-controlled source argument to the affected Socket function.
 - **Fixed-version status:** Scout reports no fixed Debian package for the selected image and references upstream Socket/Perl remediation unavailable in the supported base.
@@ -100,7 +100,7 @@ risk acceptance.
 - **Affected component/version:** Debian `perl` 5.40.1-6, inherited from the official Python slim base image. Docker Scout evidence includes files supplied through the associated `perl-base` package.
 - **Exact path:** Official `python:3.12.13-slim` runtime base -> Debian 13 Trixie base layer -> `perl-base` 5.40.1-6.
 - **Severity:** High.
-- **Current presence evidence:** Remediated image digest `62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`; `docker-scout-api-critical-high.txt`.
+- **Current presence evidence:** Remediated image digest `99a3d38d6dd9f8c69b9579593007f4720502b0bc1bb836cf0215b6cf4f4baabb`; `docker-scout-api-critical-high.txt`.
 - **Runtime reachability:** Atlas does not invoke Perl, IO::Uncompress, or a Perl archive-processing script.
 - **Exploitability prerequisites:** Perl execution that processes an attacker-supplied ZIP archive and seeks a named entry through the affected fast-forward path.
 - **Fixed-version status:** Scout reports no fixed Debian package for the selected image and references an upstream IO::Compress fix unavailable in it.
@@ -125,7 +125,7 @@ risk acceptance.
 - **Affected component/version:** Debian `perl` 5.40.1-6, inherited from the official Python slim base image. Docker Scout evidence includes files supplied through the associated `perl-base` package.
 - **Exact path:** Official `python:3.12.13-slim` runtime base -> Debian 13 Trixie base layer -> `perl-base` 5.40.1-6.
 - **Severity:** High.
-- **Current presence evidence:** Remediated image digest `62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`; `docker-scout-api-critical-high.txt`.
+- **Current presence evidence:** Remediated image digest `99a3d38d6dd9f8c69b9579593007f4720502b0bc1bb836cf0215b6cf4f4baabb`; `docker-scout-api-critical-high.txt`.
 - **Runtime reachability:** Atlas does not invoke Perl, File::GlobMapper, or Perl glob-processing scripts.
 - **Exploitability prerequisites:** Perl execution with an attacker-controlled output glob reaching the affected string-evaluation path.
 - **Fixed-version status:** Scout reports no fixed Debian package for the selected image and references an upstream IO::Compress fix unavailable in it.

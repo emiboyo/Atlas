@@ -125,7 +125,7 @@ the Milestone 5 boundary unchanged.
 GHSA-mh99-v99m-4gvg / CVE-2026-14257 remains reported through the
 ESLint/minimatch/`brace-expansion` development chain. An authenticated scan of
 remediated API image digest
-`62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`
+`99a3d38d6dd9f8c69b9579593007f4720502b0bc1bb836cf0215b6cf4f4baabb`
 reports CVE-2026-13221, CVE-2026-12087, CVE-2026-48959, and CVE-2026-48962
 in inherited Perl 5.40.1-6. The existing decisions do not authorise Milestone
 6A. Five separate decisions in

@@ -143,7 +143,7 @@ are documented in `docs/milestone-6a-security-exception-proposals.md`; all are
 | M6A-EX-005 | CVE-2026-48962                       | Perl 5.40.1-6 inherited from the Python slim base; present in authenticated remediated-image scan             |
 
 The remediated API image digest is
-`62cf21a8719ebb8915b9a4943c613e05bd78f2293dc36cceb5af82418130e6c9`.
+`99a3d38d6dd9f8c69b9579593007f4720502b0bc1bb836cf0215b6cf4f4baabb`.
 It is healthy and contains no runtime `pip`; 139 Python tests passed with
 86.01% coverage, and `pip-audit` reported no vulnerable pinned Python package.
 Scout still reports 2 Critical and 2 High findings in inherited Perl. These
